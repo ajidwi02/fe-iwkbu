@@ -1,11 +1,10 @@
 "use client";
 
-import RekapDashboard from "@/components/RekapDashboard";
-import TableReport from "@/components/TableReports";
-import { format } from "path";
 import { useEffect, useState } from "react";
+import RekapTabel from "../detail-data-cabang/RekapTabel3M";
+import RekapTabelKonversi from "./RekapKonversiIWKBU";
 
-const Homepage = () => {
+const Rekap = () => {
   const [currentTime, setCurrentTime] = useState<string>("");
 
   const [tanggalAwal, setTanggalAwal] = useState<string>("");
@@ -54,11 +53,8 @@ const Homepage = () => {
       {/* Header */}
       <div className="bg-gray-900 text-white py-4 px-4 md:px-8">
         <h1 className="text-xl md:text-3xl font-bold text-center uppercase leading-tight">
-          Monitoring CICO Pada Strategi M3
+          Monitoring CICO & Konversi IWKBU
         </h1>
-        <p className="text-sm md:text-base text-center mt-1 font-semibold text-white">
-          CLOSING TIME | {currentTime} | JR JATENG
-        </p>
       </div>
 
       {/* Sub Header */}
@@ -74,7 +70,7 @@ const Homepage = () => {
 
       {/* Rekap Section */}
       <div className="px-4 md:px-8 py-6">
-        <RekapDashboard />
+        <RekapTabelKonversi />
       </div>
 
       {/* Table Section */}
@@ -82,4 +78,4 @@ const Homepage = () => {
   );
 };
 
-export default Homepage;
+export default Rekap;
