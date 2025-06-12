@@ -2,8 +2,11 @@
 
 import RekapDashboard, { DateRangeProps } from "@/components/RekapDashboard";
 import { useEffect, useState } from "react";
+import MenambahkanData from "./menambahkan-data";
+import MengupayakanData from "./mengupayakan-data";
+import MemastikanData from "./memastikan-data";
 
-const Homepage = () => {
+const DataQuadranDashboard = () => {
   const [currentTime, setCurrentTime] = useState<string>("");
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
@@ -54,7 +57,7 @@ const Homepage = () => {
       {/* Header */}
       <div className="bg-gray-900 text-white py-4 px-4 md:px-8">
         <h1 className="text-xl md:text-3xl font-bold text-center uppercase leading-tight">
-          Monitoring CICO Pada Strategi M3
+          DASHBOAR DATA QUARTAL
         </h1>
         <p className="text-sm md:text-base text-center mt-1 font-semibold text-white">
           CLOSING TIME | {currentTime} | JR JATENG
@@ -64,7 +67,7 @@ const Homepage = () => {
       {/* Sub Header */}
       <div className="bg-white py-4 px-4 md:px-8 border-b border-gray-200">
         <h2 className="text-base md:text-lg font-bold text-black text-center uppercase tracking-wide">
-          Checkin Checkout Penerimaan IWKBU Periode{" "}
+          Analisis Kinerja Cabang Berdasarkan Quadran{" "}
           {dateRange.start && dateRange.end
             ? `${formatDisplayDate(dateRange.start)} s.d. ${formatDisplayDate(
                 dateRange.end
@@ -77,7 +80,7 @@ const Homepage = () => {
 
       {/* Rekap Section */}
       <div className="px-4 md:px-8 py-6">
-        <RekapDashboard
+        <MemastikanData
           onDateRangeChange={handleDateRangeChange}
           startDate={null}
           endDate={null}
@@ -87,4 +90,4 @@ const Homepage = () => {
   );
 };
 
-export default Homepage;
+export default DataQuadranDashboard;

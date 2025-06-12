@@ -10,6 +10,9 @@ import {
   Building2Icon,
   FileArchiveIcon,
   FileBoxIcon,
+  ChartArea,
+  PieChart,
+  PieChartIcon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -41,23 +44,13 @@ const items = [
   },
   {
     title: "Data Loket Cabang",
-    url: "/data/loketcabang",
+    url: "/detail-data-cabang",
     icon: Building2Icon,
   },
   {
-    title: "Calendar",
-    url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
+    title: "Tabel Data Quadran",
+    url: "/data-quadran",
+    icon: PieChartIcon,
   },
 ];
 
@@ -97,6 +90,17 @@ const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <div className="px-4 py-2">
+        <Image
+          src="/logo.png"
+          alt="Sidebar Banner"
+          width={200}
+          height={150}
+          className="rounded-md object-cover"
+        />
+      </div>
+
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>

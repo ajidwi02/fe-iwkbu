@@ -10,14 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { Button } from "./ui/button";
 
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -27,9 +19,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Separator } from "./ui/separator";
+import { Button } from "@/components/ui/button";
 
 export interface DateRangeProps {
   startDate: Date | null;
@@ -80,13 +71,12 @@ interface RekapRow {
   sisaNopol: number;
   sisaRupiah: number;
   gapDetails: GapDetail[];
-  mengupayakanCount: number;
 }
 
 const loketMapping = [
   {
     no: 1,
-    parentLoket: "KANWIL JAWA TENGAH",
+    parentLoket: "LOKET KEDUNGSAPUR",
     childLoket: "LOKET CABANG JAWA TENGAH",
     petugas: "GUNTUR DWI SAPUTRA",
     endpoint: "http://localhost:8080/loketcabangjawatengah",
@@ -130,7 +120,7 @@ const loketMapping = [
   // Wilayah Surakarta
   {
     no: 7,
-    parentLoket: "CABANG SURAKARTA",
+    parentLoket: "PERWAKILAN SURAKARTA",
     childLoket: "LOKET PERWAKILAN SURAKARTA",
     petugas: "M. ROSYID ABDURRACHMAN",
     endpoint: "http://localhost:8080/samsatlokperwsra",
@@ -181,7 +171,7 @@ const loketMapping = [
   // Wilayah Magelang
   {
     no: 14,
-    parentLoket: "CABANG MAGELANG",
+    parentLoket: "PERWAKILAN MAGELANG",
     childLoket: "LOKET PERWAKILAN MAGELANG",
     petugas: "MAHARIS",
     endpoint: "http://localhost:8080/samsatlokpwkmgl",
@@ -239,7 +229,7 @@ const loketMapping = [
   // Wilayah Purwokerto
   {
     no: 22,
-    parentLoket: "CABANG PURWOKERTO",
+    parentLoket: "PERWAKILAN PURWOKERTO",
     childLoket: "LOKET PERWAKILAN PURWOKERTO",
     petugas: "ARMA HEDITA S.R.",
     endpoint: "http://localhost:8080/samsatlokprwpwt",
@@ -290,7 +280,7 @@ const loketMapping = [
   // Wilayah Pekalongan
   {
     no: 29,
-    parentLoket: "CABANG PEKALONGAN",
+    parentLoket: "PERWAKILAN PEKALONGAN",
     childLoket: "LOKET PERWAKILAN PEKALONGAN",
     petugas: "WAHYU AKBAR ADIGUNA",
     endpoint: "http://localhost:8080/samsat/lokprwpkl",
@@ -362,7 +352,7 @@ const loketMapping = [
   // Wilayah Pati
   {
     no: 39,
-    parentLoket: "CABANG PATI",
+    parentLoket: "PERWAKILAN PATI",
     childLoket: "LOKET PERWAKILAN PATI",
     petugas: "YEKTI KUMALA SARI",
     endpoint: "http://localhost:8080/samsat/lokprwpti",
@@ -412,7 +402,7 @@ const loketMapping = [
   // Wilayah Semarang
   {
     no: 46,
-    parentLoket: "CABANG SEMARANG",
+    parentLoket: "PERWAKILAN SEMARANG",
     childLoket: "LOKET PERWAKILAN SEMARANG",
     petugas: "ARIEF EKA SETIAWAN",
     endpoint: "http://localhost:8080/samsat/lokprwsmg",
@@ -441,7 +431,7 @@ const loketMapping = [
   // Wilayah Sukoharjo
   {
     no: 50,
-    parentLoket: "CABANG SUKOHARJO",
+    parentLoket: "PERWAKILAN SUKOHARJO",
     childLoket: "LOKET PERWAKILAN SUKOHARJO",
     petugas: "M. HASBI",
     endpoint: "http://localhost:8080/samsat/lokprwskh",
@@ -483,7 +473,7 @@ const loketMapping = [
   },
 ];
 
-const RekapDashboard = ({
+const MenambahkanData = ({
   onDateRangeChange,
   initialStartDate,
   initialEndDate,
@@ -617,7 +607,6 @@ const RekapDashboard = ({
         sisaNopol: 0,
         sisaRupiah: 0,
         gapDetails: [],
-        mengupayakanCount: 0,
       };
 
       const matchedNopol = new Set<string>();
@@ -704,27 +693,7 @@ const RekapDashboard = ({
               }
             }
 
-            // if (!isMemastikan && !isMenambahkan && item.iwkbu_ti_nopol) {
-            //   sisaNopolSet.add(item.iwkbu_ti_nopol);
-            //   sisaRupiah += item.iwkbu_ti_rupiah_penerimaan || 0;
-            // }
-            const processedNopols = new Set<string>();
-            endpointData.forEach((ciItem) => {
-              if (
-                ciItem.iwkbu_ti_nopol &&
-                ((isMemastikan && matchedNopol.has(ciItem.iwkbu_ti_nopol)) ||
-                  (isMenambahkan &&
-                    (ciItem.tl_keterangan_konversi_iwkbu === "Armada Baru" ||
-                      ciItem.tl_keterangan_konversi_iwkbu === "Mutasi Masuk")))
-              ) {
-                processedNopols.add(ciItem.iwkbu_ti_nopol);
-              }
-            });
-
-            if (
-              item.iwkbu_ti_nopol &&
-              !processedNopols.has(item.iwkbu_ti_nopol)
-            ) {
+            if (!isMemastikan && !isMenambahkan && item.iwkbu_ti_nopol) {
               sisaNopolSet.add(item.iwkbu_ti_nopol);
               sisaRupiah += item.iwkbu_ti_rupiah_penerimaan || 0;
             }
@@ -789,12 +758,8 @@ const RekapDashboard = ({
         countNopolBulanMajuTI > 0
           ? Math.round(totalBulanMajuTI / rekap.checkoutNopol)
           : 0;
-
-      rekap.sisaNopol =
-        rekap.checkoutNopol - (rekap.memastikanNopol + rekap.menambahkanNopol);
-      rekap.sisaRupiah =
-        rekap.checkoutRupiah -
-        (rekap.memastikanRupiah + rekap.menambahkanRupiah);
+      rekap.sisaNopol = sisaNopolSet.size;
+      rekap.sisaRupiah = sisaRupiah;
       rekap.gapDetails = gapDetails;
 
       // Handle parent loket and subtotals
@@ -803,14 +768,6 @@ const RekapDashboard = ({
           groupSubTotal.memastikanPersen =
             groupSubTotal.checkoutNopol > 0
               ? groupSubTotal.memastikanNopol / groupSubTotal.checkoutNopol
-              : 0;
-
-          // Calculate average mengupayakan for subtotal
-          groupSubTotal.mengupayakan =
-            groupSubTotal.mengupayakanCount > 0
-              ? Math.round(
-                  groupSubTotal.mengupayakan / groupSubTotal.mengupayakanCount
-                )
               : 0;
           result.push(groupSubTotal);
           groupSubTotal = null;
@@ -834,7 +791,6 @@ const RekapDashboard = ({
           sisaNopol: 0,
           sisaRupiah: 0,
           gapDetails: [],
-          mengupayakanCount: 0,
         });
 
         groupSubTotal = {
@@ -855,7 +811,6 @@ const RekapDashboard = ({
           sisaNopol: 0,
           sisaRupiah: 0,
           gapDetails: [],
-          mengupayakanCount: 0,
         };
       }
 
@@ -870,11 +825,7 @@ const RekapDashboard = ({
         groupSubTotal.memastikanRupiah += rekap.memastikanRupiah;
         groupSubTotal.menambahkanNopol += rekap.menambahkanNopol;
         groupSubTotal.menambahkanRupiah += rekap.menambahkanRupiah;
-        if (rekap.mengupayakan > 0) {
-          groupSubTotal.mengupayakan += rekap.mengupayakan;
-          groupSubTotal.mengupayakanCount =
-            (groupSubTotal.mengupayakanCount || 0) + 1;
-        }
+        groupSubTotal.mengupayakan += rekap.mengupayakan;
         groupSubTotal.gapNopol += rekap.gapNopol;
         groupSubTotal.sisaNopol += rekap.sisaNopol;
         groupSubTotal.sisaRupiah += rekap.sisaRupiah;
@@ -886,72 +837,45 @@ const RekapDashboard = ({
         groupSubTotal.checkoutNopol > 0
           ? groupSubTotal.memastikanNopol / groupSubTotal.checkoutNopol
           : 0;
-
-      // Calculate average mengupayakan for subtotal
-      groupSubTotal.mengupayakan =
-        groupSubTotal.mengupayakanCount > 0
-          ? Math.round(
-              groupSubTotal.mengupayakan / groupSubTotal.mengupayakanCount
-            )
-          : 0;
-
       result.push(groupSubTotal);
     }
-
-    const subTotalRows = result.filter(
-      (row) => row.loketKantor === "SUB TOTAL"
-    );
 
     const grandTotal: RekapRow = {
       no: 0,
       loketKantor: "GRAND TOTAL",
       petugas: "",
-      checkinNopol: subTotalRows.reduce(
-        (sum, row) => sum + row.checkinNopol,
-        0
-      ),
-      checkinRupiah: subTotalRows.reduce(
-        (sum, row) => sum + row.checkinRupiah,
-        0
-      ),
-      checkoutNopol: subTotalRows.reduce(
-        (sum, row) => sum + row.checkoutNopol,
-        0
-      ),
-      checkoutRupiah: subTotalRows.reduce(
-        (sum, row) => sum + row.checkoutRupiah,
-        0
-      ),
-      memastikanNopol: subTotalRows.reduce(
+      checkinNopol: result.reduce((sum, row) => sum + row.checkinNopol, 0),
+      checkinRupiah: result.reduce((sum, row) => sum + row.checkinRupiah, 0),
+      checkoutNopol: result.reduce((sum, row) => sum + row.checkoutNopol, 0),
+      checkoutRupiah: result.reduce((sum, row) => sum + row.checkoutRupiah, 0),
+      memastikanNopol: result.reduce(
         (sum, row) => sum + row.memastikanNopol,
         0
       ),
-      memastikanRupiah: subTotalRows.reduce(
+      memastikanRupiah: result.reduce(
         (sum, row) => sum + row.memastikanRupiah,
         0
       ),
       memastikanPersen:
-        subTotalRows.reduce((sum, row) => sum + row.checkoutNopol, 0) > 0
-          ? subTotalRows.reduce((sum, row) => sum + row.memastikanNopol, 0) /
-            subTotalRows.reduce((sum, row) => sum + row.checkoutNopol, 0)
+        result.reduce((sum, row) => sum + row.checkoutNopol, 0) > 0
+          ? result.reduce((sum, row) => sum + row.memastikanNopol, 0) /
+            result.reduce((sum, row) => sum + row.checkoutNopol, 0)
           : 0,
-      menambahkanNopol: subTotalRows.reduce(
+      menambahkanNopol: result.reduce(
         (sum, row) => sum + row.menambahkanNopol,
         0
       ),
-      menambahkanRupiah: subTotalRows.reduce(
+      menambahkanRupiah: result.reduce(
         (sum, row) => sum + row.menambahkanRupiah,
         0
       ),
-      mengupayakan: Math.round(
-        subTotalRows.reduce((sum, row) => sum + row.mengupayakan, 0) /
-          subTotalRows.filter((row) => row.mengupayakan > 0).length
-      ),
-      gapNopol: subTotalRows.reduce((sum, row) => sum + row.gapNopol, 0),
-      sisaNopol: subTotalRows.reduce((sum, row) => sum + row.sisaNopol, 0),
-      sisaRupiah: subTotalRows.reduce((sum, row) => sum + row.sisaRupiah, 0),
+      mengupayakan:
+        result.reduce((sum, row) => sum + row.mengupayakan, 0) /
+        result.filter((row) => row.mengupayakan > 0).length,
+      gapNopol: result.reduce((sum, row) => sum + row.gapNopol, 0),
+      sisaNopol: result.reduce((sum, row) => sum + row.sisaNopol, 0),
+      sisaRupiah: result.reduce((sum, row) => sum + row.sisaRupiah, 0),
       gapDetails: [],
-      mengupayakanCount: 0,
     };
 
     result.push(grandTotal);
@@ -982,6 +906,20 @@ const RekapDashboard = ({
   const handleDetail = (row: RekapRow) => {
     setSelectedRow(row);
   };
+
+  // Filter to only show SUB TOTAL rows
+  const filteredData = rekapData.filter(
+    (row) =>
+      row.loketKantor === "SUB TOTAL" ||
+      row.loketKantor === "LOKET KEDUNGSAPUR" ||
+      row.loketKantor === "PERWAKILAN SURAKARTA" ||
+      row.loketKantor === "PERWAKILAN MAGELANG" ||
+      row.loketKantor === "PERWAKILAN PURWOKERTO" ||
+      row.loketKantor === "PERWAKILAN PEKALONGAN" ||
+      row.loketKantor === "PERWAKILAN PATI" ||
+      row.loketKantor === "PERWAKILAN SEMARANG" ||
+      row.loketKantor === "PERWAKILAN SUKOHARJO"
+  );
 
   if (loading) {
     return (
@@ -1094,358 +1032,56 @@ const RekapDashboard = ({
         <Table>
           <TableHeader className="bg-gray-100">
             <TableRow>
-              <TableHead className="w-[50px] text-center">NO</TableHead>
-              <TableHead className="min-w-[200px]">LOKET KANTOR</TableHead>
-              <TableHead className="min-w-[150px]">PETUGAS</TableHead>
-              <TableHead colSpan={2} className="text-center">
-                CHECKIN
-              </TableHead>
-              <TableHead colSpan={2} className="text-center">
-                CHECKOUT
-              </TableHead>
-              <TableHead colSpan={3} className="text-center">
-                MEMASTIKAN
-              </TableHead>
-              <TableHead className="text-center">GAP</TableHead>
-              <TableHead className="text-center">MENGUPAYAKAN</TableHead>
-              <TableHead colSpan={2} className="text-center">
-                MENAMBAHKAN
-              </TableHead>
-              <TableHead colSpan={2} className="text-center">
-                PENERIMAAN LEBIH
-              </TableHead>
-            </TableRow>
-            <TableRow>
-              <TableHead></TableHead>
-              <TableHead></TableHead>
-              <TableHead></TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">RUPIAH</TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">RUPIAH</TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">RUPIAH</TableHead>
-              <TableHead className="text-center">%</TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">
-                Rata-rata Bulan Maju
-              </TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">RUPIAH</TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">RUPIAH</TableHead>
+              <TableHead className="w-[50px] text-center">NO URUT</TableHead>
+              <TableHead className="min-w-[200px]">LOKET</TableHead>
+              <TableHead className="text-center">NILAI (%)</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rekapData.map((row, index) => {
-              const isGroupHeader =
-                row.loketKantor === "LOKET KEDUNGSAPUR" ||
-                row.loketKantor === "CABANG SURAKARTA";
-              const isSubTotal = row.loketKantor === "SUB TOTAL";
-              const isGrandTotal = row.loketKantor === "GRAND TOTAL";
-
-              return (
-                <TableRow
-                  key={index}
-                  className={
-                    isGrandTotal
-                      ? "bg-purple-50 font-bold"
-                      : isSubTotal
-                      ? "bg-blue-50 font-semibold"
-                      : isGroupHeader
-                      ? "bg-gray-100 font-medium"
-                      : ""
-                  }
-                >
-                  <TableCell className="text-center">
-                    {!isGroupHeader && row.no > 0 ? row.no : ""}
-                  </TableCell>
-                  <TableCell
-                    className={
-                      isSubTotal || isGrandTotal ? "font-semibold" : ""
-                    }
-                  >
-                    {row.loketKantor}
-                  </TableCell>
-                  <TableCell>{row.petugas}</TableCell>
-                  <TableCell className="text-center">
-                    {row.checkinNopol > 0 ? row.checkinNopol : "-"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.checkinRupiah > 0
-                      ? formatRupiah(row.checkinRupiah)
-                      : "-"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {row.checkoutNopol > 0 ? row.checkoutNopol : "-"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.checkoutRupiah > 0
-                      ? formatRupiah(row.checkoutRupiah)
-                      : "-"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {row.memastikanNopol > 0 ? row.memastikanNopol : "-"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.memastikanRupiah > 0
-                      ? formatRupiah(row.memastikanRupiah)
-                      : "-"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {row.memastikanPersen > 0
-                      ? formatPercentage(row.memastikanPersen)
-                      : "-"}
-                  </TableCell>
-                  <TableCell
-                    className={`text-center ${
-                      !isGroupHeader &&
-                      !isSubTotal &&
-                      !isGrandTotal &&
-                      row.gapNopol !== 0
-                        ? "text-blue-600 cursor-pointer hover:underline font-medium"
-                        : ""
-                    }`}
-                    onClick={() => {
-                      if (
-                        !isGroupHeader &&
-                        !isSubTotal &&
-                        !isGrandTotal &&
-                        row.gapNopol !== 0
-                      ) {
-                        handleDetail(row);
-                      }
-                    }}
-                  >
-                    {row.gapNopol !== 0 ? row.gapNopol : "-"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {row.mengupayakan !== 0 ? row.mengupayakan : "-"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {row.menambahkanNopol > 0 ? row.menambahkanNopol : "-"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.menambahkanRupiah > 0
-                      ? formatRupiah(row.menambahkanRupiah)
-                      : "-"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {row.sisaNopol > 0 ? row.sisaNopol : "-"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.sisaRupiah > 0 ? formatRupiah(row.sisaRupiah) : "-"}
-                  </TableCell>
+            {filteredData
+              .filter(
+                (row) =>
+                  row.loketKantor === "LOKET KEDUNGSAPUR" ||
+                  row.loketKantor === "PERWAKILAN SURAKARTA" ||
+                  row.loketKantor === "PERWAKILAN MAGELANG" ||
+                  row.loketKantor === "PERWAKILAN PURWOKERTO" ||
+                  row.loketKantor === "PERWAKILAN PEKALONGAN" ||
+                  row.loketKantor === "PERWAKILAN PATI" ||
+                  row.loketKantor === "PERWAKILAN SEMARANG" ||
+                  row.loketKantor === "PERWAKILAN SUKOHARJO"
+              )
+              .map((row) => {
+                const subTotalRow = filteredData.find(
+                  (r) =>
+                    r.loketKantor === "SUB TOTAL" &&
+                    filteredData.indexOf(r) > filteredData.indexOf(row)
+                );
+                return {
+                  ...row,
+                  memastikanPersen: subTotalRow?.memastikanPersen || 0,
+                };
+              })
+              .sort((a, b) => b.memastikanPersen - a.memastikanPersen)
+              .map((row, index) => (
+                <TableRow key={index} className="bg-blue-50 font-semibold">
+                  {[
+                    <TableCell key="no" className="text-center">
+                      {index + 1}
+                    </TableCell>,
+                    <TableCell key="loket">{row.loketKantor}</TableCell>,
+                    <TableCell key="nilai" className="text-center">
+                      {row.memastikanPersen
+                        ? `${(row.memastikanPersen * 100).toFixed(2)}%`
+                        : "-"}
+                    </TableCell>,
+                  ]}
                 </TableRow>
-              );
-            })}
+              ))}
           </TableBody>
         </Table>
       </div>
-      {/* Detail Modal */}
-      {selectedRow && (
-        <div className="fixed inset-0 bg-white/30 backdrop-blur-lg backdrop-saturate-150 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            {/* Header */}
-            <div className="flex justify-between items-start p-5 border-b">
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">
-                  Detail GAP Nopol - {selectedRow.loketKantor}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {selectedRow.petugas || "-"}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedRow(null)}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
-                &times;
-              </button>
-            </div>
-
-            {/* Stats Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-5 bg-gray-50 border-b">
-              <div className="bg-white p-3 rounded-md shadow-sm">
-                <p className="text-sm text-gray-600">CheckIn</p>
-                <p className="text-lg font-semibold">
-                  {selectedRow.checkinNopol} nopol
-                </p>
-              </div>
-              <div className="bg-white p-3 rounded-md shadow-sm">
-                <p className="text-sm text-gray-600">Memastikan</p>
-                <p className="text-lg font-semibold">
-                  {selectedRow.memastikanNopol} nopol
-                </p>
-              </div>
-              <div className="bg-white p-3 rounded-md shadow-sm">
-                <p className="text-sm text-gray-600">Total GAP</p>
-                <p className="text-lg font-semibold">
-                  {selectedRow.gapNopol} nopol
-                </p>
-              </div>
-              {/* <div className="bg-white p-3 rounded-md shadow-sm">
-                <p className="text-sm text-gray-600">Total Nilai</p>
-                <p className="text-lg font-semibold">
-                  {formatRupiah(
-                    selectedRow.gapDetails.reduce(
-                      (sum, item) => sum + item.rupiah,
-                      0
-                    )
-                  )}
-                </p>
-              </div> */}
-            </div>
-
-            {/* Table Container */}
-            <div className="flex-1 overflow-auto">
-              <Table className="min-w-full">
-                <TableHeader className="bg-gray-100 sticky top-0">
-                  <TableRow>
-                    <TableHead className="w-[60px] text-center">No</TableHead>
-                    <TableHead className="min-w-[120px] text-center">
-                      No. Polisi
-                    </TableHead>
-                    <TableHead className="min-w-[150px] text-center">
-                      Keterangan
-                    </TableHead>
-                    <TableHead className="min-w-[120px] text-right">
-                      Nilai
-                    </TableHead>
-                    <TableHead className="min-w-[120px] text-right">
-                      Tanggal
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(() => {
-                    // Group gap details by keterangan
-                    const groupedDetails = selectedRow.gapDetails.reduce(
-                      (groups, item) => {
-                        const key = item.keterangan || "-";
-                        if (!groups[key]) {
-                          groups[key] = [];
-                        }
-                        groups[key].push(item);
-                        return groups;
-                      },
-                      {} as Record<string, GapDetail[]>
-                    );
-
-                    // If no data
-                    if (Object.keys(groupedDetails).length === 0) {
-                      return (
-                        <TableRow>
-                          <TableCell
-                            colSpan={5}
-                            className="py-8 text-center text-gray-500"
-                          >
-                            Tidak ada data detail GAP
-                          </TableCell>
-                        </TableRow>
-                      );
-                    }
-
-                    // Render grouped data
-                    let rowIndex = 0;
-                    return Object.entries(groupedDetails).flatMap(
-                      ([keterangan, items], groupIndex) => {
-                        const subtotal = items.reduce(
-                          (sum, item) => sum + item.rupiah,
-                          0
-                        );
-
-                        return [
-                          // Group header row
-                          <TableRow
-                            key={`header-${groupIndex}`}
-                            className="bg-gray-50"
-                          >
-                            <TableCell
-                              colSpan={5}
-                              className="font-semibold text-gray-800"
-                            >
-                              {keterangan} ({items.length} Nopol)
-                            </TableCell>
-                          </TableRow>,
-                          // Item rows
-                          ...items.map((item, itemIndex) => {
-                            rowIndex++;
-                            return (
-                              <TableRow key={`item-${groupIndex}-${itemIndex}`}>
-                                <TableCell className="py-2 font-medium text-center">
-                                  {rowIndex}
-                                </TableCell>
-                                <TableCell className="py-2 font-mono text-center">
-                                  {item.nopol}
-                                </TableCell>
-                                <TableCell className="py-2 text-center">
-                                  {item.keterangan}
-                                </TableCell>
-                                <TableCell className="py-2 text-right">
-                                  {formatRupiah(item.rupiah)}
-                                </TableCell>
-                                <TableCell className="py-2 text-right">
-                                  {item.tgl_transaksi}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          }),
-                          // Subtotal row
-                          <TableRow
-                            key={`subtotal-${groupIndex}`}
-                            className="bg-blue-50 font-medium"
-                          >
-                            <TableCell colSpan={3} className="text-right">
-                              Subtotal {keterangan}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatRupiah(subtotal)}
-                            </TableCell>
-                            <TableCell></TableCell>
-                          </TableRow>,
-                        ];
-                      }
-                    );
-                  })()}
-                </TableBody>
-                {/* Grand total row */}
-                {selectedRow.gapDetails.length > 0 && (
-                  <TableFooter className="bg-gray-100 sticky bottom-0">
-                    <TableRow className="font-bold">
-                      <TableCell colSpan={3} className="text-right">
-                        Grand Total
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatRupiah(
-                          selectedRow.gapDetails.reduce(
-                            (sum, item) => sum + item.rupiah,
-                            0
-                          )
-                        )}
-                      </TableCell>
-                      <TableCell></TableCell>
-                    </TableRow>
-                  </TableFooter>
-                )}
-              </Table>
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-end p-4 border-t bg-gray-50">
-              <Button
-                onClick={() => setSelectedRow(null)}
-                variant="outline"
-                className="min-w-[100px]"
-              >
-                Tutup
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default RekapDashboard;
+export default MenambahkanData;
