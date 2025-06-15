@@ -87,7 +87,7 @@ const loketMapping = [
   {
     no: 1,
     parentLoket: "KANWIL JAWA TENGAH",
-    childLoket: "LOKET CABANG JAWA TENGAH",
+    childLoket: "LOKET KANWIL JAWA TENGAH",
     petugas: "GUNTUR DWI SAPUTRA",
     endpoint: "http://103.152.242.34:8080/loketcabangjawatengah",
   },
@@ -131,7 +131,7 @@ const loketMapping = [
   {
     no: 7,
     parentLoket: "CABANG SURAKARTA",
-    childLoket: "LOKET PERWAKILAN SURAKARTA",
+    childLoket: "LOKET CABANG SURAKARTA",
     petugas: "M. ROSYID ABDURRACHMAN",
     endpoint: "http://103.152.242.34:8080/samsatlokperwsra",
   },
@@ -182,7 +182,7 @@ const loketMapping = [
   {
     no: 14,
     parentLoket: "CABANG MAGELANG",
-    childLoket: "LOKET PERWAKILAN MAGELANG",
+    childLoket: "LOKET CABANG MAGELANG",
     petugas: "MAHARIS",
     endpoint: "http://103.152.242.34:8080/samsatlokpwkmgl",
   },
@@ -240,7 +240,7 @@ const loketMapping = [
   {
     no: 22,
     parentLoket: "CABANG PURWOKERTO",
-    childLoket: "LOKET PERWAKILAN PURWOKERTO",
+    childLoket: "LOKET CABANG PURWOKERTO",
     petugas: "ARMA HEDITA S.R.",
     endpoint: "http://103.152.242.34:8080/samsatlokprwpwt",
   },
@@ -291,7 +291,7 @@ const loketMapping = [
   {
     no: 29,
     parentLoket: "CABANG PEKALONGAN",
-    childLoket: "LOKET PERWAKILAN PEKALONGAN",
+    childLoket: "LOKET CABANG PEKALONGAN",
     petugas: "WAHYU AKBAR ADIGUNA",
     endpoint: "http://103.152.242.34:8080/samsat/lokprwpkl",
   },
@@ -363,7 +363,7 @@ const loketMapping = [
   {
     no: 39,
     parentLoket: "CABANG PATI",
-    childLoket: "LOKET PERWAKILAN PATI",
+    childLoket: "LOKET CABANG PATI",
     petugas: "YEKTI KUMALA SARI",
     endpoint: "http://103.152.242.34:8080/samsat/lokprwpti",
   },
@@ -413,7 +413,7 @@ const loketMapping = [
   {
     no: 46,
     parentLoket: "CABANG SEMARANG",
-    childLoket: "LOKET PERWAKILAN SEMARANG",
+    childLoket: "LOKET CABANG SEMARANG",
     petugas: "ARIEF EKA SETIAWAN",
     endpoint: "http://103.152.242.34:8080/samsat/lokprwsmg",
   },
@@ -442,7 +442,7 @@ const loketMapping = [
   {
     no: 50,
     parentLoket: "CABANG SUKOHARJO",
-    childLoket: "LOKET PERWAKILAN SUKOHARJO",
+    childLoket: "LOKET CABANG SUKOHARJO",
     petugas: "M. HASBI",
     endpoint: "http://103.152.242.34:8080/samsat/lokprwskh",
   },
