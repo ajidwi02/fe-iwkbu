@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -53,6 +52,13 @@ interface GapDetail {
   tgl_transaksi: string;
 }
 
+interface QuadrantData {
+  q1: { count: number; items: string[] };
+  q2: { count: number; items: string[] };
+  q3: { count: number; items: string[] };
+  q4: { count: number; items: string[] };
+}
+
 interface RekapRow {
   no: number;
   loketKantor: string;
@@ -77,8 +83,8 @@ interface RekapRow {
 const loketMapping = [
   {
     no: 1,
-    parentLoket: "LOKET KEDUNGSAPUR",
-    childLoket: "LOKET CABANG JAWA TENGAH",
+    parentLoket: "KANWIL JAWA TENGAH",
+    childLoket: "LOKET KANWIL JAWA TENGAH",
     petugas: "GUNTUR DWI SAPUTRA",
     endpoint: "http://103.152.242.34:8080/loketcabangjawatengah",
   },
@@ -121,8 +127,8 @@ const loketMapping = [
   // Wilayah Surakarta
   {
     no: 7,
-    parentLoket: "PERWAKILAN SURAKARTA",
-    childLoket: "LOKET PERWAKILAN SURAKARTA",
+    parentLoket: "CABANG SURAKARTA",
+    childLoket: "LOKET CABANG SURAKARTA",
     petugas: "M. ROSYID ABDURRACHMAN",
     endpoint: "http://103.152.242.34:8080/samsatlokperwsra",
   },
@@ -172,8 +178,8 @@ const loketMapping = [
   // Wilayah Magelang
   {
     no: 14,
-    parentLoket: "PERWAKILAN MAGELANG",
-    childLoket: "LOKET PERWAKILAN MAGELANG",
+    parentLoket: "CABANG MAGELANG",
+    childLoket: "LOKET CABANG MAGELANG",
     petugas: "MAHARIS",
     endpoint: "http://103.152.242.34:8080/samsatlokpwkmgl",
   },
@@ -230,8 +236,8 @@ const loketMapping = [
   // Wilayah Purwokerto
   {
     no: 22,
-    parentLoket: "PERWAKILAN PURWOKERTO",
-    childLoket: "LOKET PERWAKILAN PURWOKERTO",
+    parentLoket: "CABANG PURWOKERTO",
+    childLoket: "LOKET CABANG PURWOKERTO",
     petugas: "ARMA HEDITA S.R.",
     endpoint: "http://103.152.242.34:8080/samsatlokprwpwt",
   },
@@ -281,8 +287,8 @@ const loketMapping = [
   // Wilayah Pekalongan
   {
     no: 29,
-    parentLoket: "PERWAKILAN PEKALONGAN",
-    childLoket: "LOKET PERWAKILAN PEKALONGAN",
+    parentLoket: "CABANG PEKALONGAN",
+    childLoket: "LOKET CABANG PEKALONGAN",
     petugas: "WAHYU AKBAR ADIGUNA",
     endpoint: "http://103.152.242.34:8080/samsat/lokprwpkl",
   },
@@ -353,8 +359,8 @@ const loketMapping = [
   // Wilayah Pati
   {
     no: 39,
-    parentLoket: "PERWAKILAN PATI",
-    childLoket: "LOKET PERWAKILAN PATI",
+    parentLoket: "CABANG PATI",
+    childLoket: "LOKET CABANG PATI",
     petugas: "YEKTI KUMALA SARI",
     endpoint: "http://103.152.242.34:8080/samsat/lokprwpti",
   },
@@ -403,8 +409,8 @@ const loketMapping = [
   // Wilayah Semarang
   {
     no: 46,
-    parentLoket: "PERWAKILAN SEMARANG",
-    childLoket: "LOKET PERWAKILAN SEMARANG",
+    parentLoket: "CABANG SEMARANG",
+    childLoket: "LOKET CABANG SEMARANG",
     petugas: "ARIEF EKA SETIAWAN",
     endpoint: "http://103.152.242.34:8080/samsat/lokprwsmg",
   },
@@ -432,8 +438,8 @@ const loketMapping = [
   // Wilayah Sukoharjo
   {
     no: 50,
-    parentLoket: "PERWAKILAN SUKOHARJO",
-    childLoket: "LOKET PERWAKILAN SUKOHARJO",
+    parentLoket: "CABANG SUKOHARJO",
+    childLoket: "LOKET CABANG SUKOHARJO",
     petugas: "M. HASBI",
     endpoint: "http://103.152.242.34:8080/samsat/lokprwskh",
   },
@@ -491,71 +497,22 @@ const MemastikanData = ({
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [useDateRange, setUseDateRange] = useState(true);
 
-  // New state for quadrant data and tooltip
-  const [quadrantData, setQuadrantData] = useState<any>(null);
-  const [hoveredQuadrant, setHoveredQuadrant] = useState<string | null>(null);
+  // State baru untuk mengontrol popup
+  const [quadrantDetail, setQuadrantDetail] = useState<{
+    category: string;
+    quadrant: string;
+    title: string;
+    items: string[];
+  } | null>(null);
 
-  // Function to classify data into quadrants
-  const classifyQuadrants = () => {
-    if (!filteredData.length) return;
-    // Memastikan Quadrants
-    const memastikanQuadrants = {
-      q1: { name: "Quadran I (61-100%)", value: 0, items: [] as string[] },
-      q2: { name: "Quadran II (41-60%)", value: 0, items: [] as string[] },
-      q3: { name: "Quadran III (21-40%)", value: 0, items: [] as string[] },
-      q4: { name: "Quadran IV (0-20%)", value: 0, items: [] as string[] },
-    };
-
-    // Mengupayakan Quadrants =
-    const mengupayakanQuadrants = {
-      q1: { name: "Quadran I (9+ bulan)", value: 0, items: [] as string[] },
-      q2: { name: "Quadran II (6-8 bulan)", value: 0, items: [] as string[] },
-      q3: { name: "Quadran III (3-5 bulan)", value: 0, items: [] as string[] },
-      q4: { name: "Quadran IV (0-2 bulan)", value: 0, items: [] as string[] },
-    };
-
-    // Mengupayakan Quadrants =
-    const menambahkanQuadrants = {
-      q1: { name: "Quadran I (15+ Nopol)", value: 0, items: [] },
-      q2: { name: "Quadran II (11-14 nopol)", value: 0, items: [] },
-      q3: { name: "Quadran III (6-10 nopol)", value: 0, items: [] },
-      q4: { name: "Quadran IV (0-5 nopol)", value: 0, items: [] },
-    };
-
-    filteredData.forEach((row) => {
-      if (row.loketKantor === "SUB TOTAL") return;
-
-      // Memastikan classification
-      const memastikanPercent = row.memastikanPersen * 100;
-      if (memastikanPercent >= 61) {
-        memastikanQuadrants.q1.value++;
-        memastikanQuadrants.q1.items.push(row.loketKantor);
-      } else if (memastikanPercent >= 41) {
-        memastikanQuadrants.q2.value++;
-        memastikanQuadrants.q2.items.push(row.loketKantor);
-      } else if (memastikanPercent >= 21) {
-        memastikanQuadrants.q3.value++;
-        memastikanQuadrants.q3.items.push(row.loketKantor);
-      } else {
-        memastikanQuadrants.q4.value++;
-        memastikanQuadrants.q4.items.push(row.loketKantor);
-      }
-      // Mengupayakan classification
-      const mengupayakanValue = row.mengupayakan || 0;
-      if (mengupayakanValue >= 9) {
-        mengupayakanQuadrants.q1.value++;
-        mengupayakanQuadrants.q1.items.push(row.loketKantor);
-      } else if (mengupayakanValue >= 6) {
-        mengupayakanQuadrants.q2.value++;
-        mengupayakanQuadrants.q2.items.push(row.loketKantor);
-      } else if (mengupayakanValue >= 3) {
-        mengupayakanQuadrants.q3.value++;
-        mengupayakanQuadrants.q3.items.push(row.loketKantor);
-      } else {
-        mengupayakanQuadrants.q4.value++;
-        mengupayakanQuadrants.q4.items.push(row.loketKantor);
-      }
-    });
+  // Fungsi untuk membuka detail quadrant
+  const openQuadrantDetail = (
+    category: string,
+    quadrant: string,
+    title: string,
+    items: string[]
+  ) => {
+    setQuadrantDetail({ category, quadrant, title, items });
   };
 
   const formatDateWithoutYear = (date: Date | null) => {
@@ -1003,15 +960,105 @@ const MemastikanData = ({
   const filteredData = rekapData.filter(
     (row) =>
       row.loketKantor === "SUB TOTAL" ||
-      row.loketKantor === "LOKET KEDUNGSAPUR" ||
-      row.loketKantor === "PERWAKILAN SURAKARTA" ||
-      row.loketKantor === "PERWAKILAN MAGELANG" ||
-      row.loketKantor === "PERWAKILAN PURWOKERTO" ||
-      row.loketKantor === "PERWAKILAN PEKALONGAN" ||
-      row.loketKantor === "PERWAKILAN PATI" ||
-      row.loketKantor === "PERWAKILAN SEMARANG" ||
-      row.loketKantor === "PERWAKILAN SUKOHARJO"
+      row.loketKantor === "KANWIL JAWA TENGAH" ||
+      row.loketKantor === "CABANG SURAKARTA" ||
+      row.loketKantor === "CABANG MAGELANG" ||
+      row.loketKantor === "CABANG PURWOKERTO" ||
+      row.loketKantor === "CABANG PEKALONGAN" ||
+      row.loketKantor === "CABANG PATI" ||
+      row.loketKantor === "CABANG SEMARANG" ||
+      row.loketKantor === "CABANG SUKOHARJO"
   );
+
+  const quadrantData = useMemo(() => {
+    if (!rekapData.length) return null;
+
+    const memastikanQuadrants = {
+      q1: { count: 0, items: [] as string[] },
+      q2: { count: 0, items: [] as string[] },
+      q3: { count: 0, items: [] as string[] },
+      q4: { count: 0, items: [] as string[] },
+    };
+
+    const mengupayakanQuadrants = {
+      q1: { count: 0, items: [] as string[] },
+      q2: { count: 0, items: [] as string[] },
+      q3: { count: 0, items: [] as string[] },
+      q4: { count: 0, items: [] as string[] },
+    };
+
+    const menambahkanQuadrants = {
+      q1: { count: 0, items: [] as string[] },
+      q2: { count: 0, items: [] as string[] },
+      q3: { count: 0, items: [] as string[] },
+      q4: { count: 0, items: [] as string[] },
+    };
+
+    rekapData.forEach((row) => {
+      if (
+        row.loketKantor === "SUB TOTAL" ||
+        row.loketKantor === "GRAND TOTAL" ||
+        row.loketKantor.startsWith("LOKET") ||
+        row.loketKantor.startsWith("PERWAKILAN")
+      ) {
+        return;
+      }
+
+      // Klasifikasi Memastikan
+      const memastikanPercent = row.memastikanPersen * 100;
+      if (memastikanPercent >= 61) {
+        memastikanQuadrants.q1.count++;
+        memastikanQuadrants.q1.items.push(row.loketKantor);
+      } else if (memastikanPercent >= 41) {
+        memastikanQuadrants.q2.count++;
+        memastikanQuadrants.q2.items.push(row.loketKantor);
+      } else if (memastikanPercent >= 21) {
+        memastikanQuadrants.q3.count++;
+        memastikanQuadrants.q3.items.push(row.loketKantor);
+      } else {
+        memastikanQuadrants.q4.count++;
+        memastikanQuadrants.q4.items.push(row.loketKantor);
+      }
+
+      // Klasifikasi Mengupayakan
+      const mengupayakanValue = row.mengupayakan || 0;
+      if (mengupayakanValue >= 9) {
+        mengupayakanQuadrants.q1.count++;
+        mengupayakanQuadrants.q1.items.push(row.loketKantor);
+      } else if (mengupayakanValue >= 6) {
+        mengupayakanQuadrants.q2.count++;
+        mengupayakanQuadrants.q2.items.push(row.loketKantor);
+      } else if (mengupayakanValue >= 3) {
+        mengupayakanQuadrants.q3.count++;
+        mengupayakanQuadrants.q3.items.push(row.loketKantor);
+      } else {
+        mengupayakanQuadrants.q4.count++;
+        mengupayakanQuadrants.q4.items.push(row.loketKantor);
+      }
+
+      // Klasifikasi Menambahkan
+      const menambahkanValue = row.menambahkanNopol || 0;
+      if (menambahkanValue >= 15) {
+        menambahkanQuadrants.q1.count++;
+        menambahkanQuadrants.q1.items.push(row.loketKantor);
+      } else if (menambahkanValue >= 11) {
+        menambahkanQuadrants.q2.count++;
+        menambahkanQuadrants.q2.items.push(row.loketKantor);
+      } else if (menambahkanValue >= 6) {
+        menambahkanQuadrants.q3.count++;
+        menambahkanQuadrants.q3.items.push(row.loketKantor);
+      } else {
+        menambahkanQuadrants.q4.count++;
+        menambahkanQuadrants.q4.items.push(row.loketKantor);
+      }
+    });
+
+    return {
+      memastikan: memastikanQuadrants,
+      mengupayakan: mengupayakanQuadrants,
+      menambahkan: menambahkanQuadrants,
+    };
+  }, [rekapData]);
 
   if (loading) {
     return (
@@ -1031,6 +1078,7 @@ const MemastikanData = ({
     <div className="space-y-4">
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end gap-4 rounded-md border p-4 shadow-sm">
+          {/* filter tanggal */}
           <div className="w-full">
             <label className="text-sm font-medium mb-1 block">
               Filter Tanggal
@@ -1119,9 +1167,225 @@ const MemastikanData = ({
           </div>
         </div>
       </div>
+      {/* Visualisasi Quadrant */}
+      {quadrantData && (
+        <div className="space-y-8 mt-8">
+          <h2 className="text-xl font-bold text-center">Visualisasi Kinerja</h2>
+
+          {/* Quadrant Memastikan - Responsif */}
+          <div className="border rounded-lg p-4 shadow-sm">
+            <h3 className="font-medium text-center mb-4">
+              Kategori Memastikan
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                {
+                  key: "q1",
+                  label: "Quadran I (61-100%)",
+                  color: "bg-green-100 border-green-500 hover:bg-green-200",
+                  data: quadrantData.memastikan.q1,
+                },
+                {
+                  key: "q2",
+                  label: "Quadran II (41-60%)",
+                  color: "bg-yellow-100 border-yellow-500 hover:bg-yellow-200",
+                  data: quadrantData.memastikan.q2,
+                },
+                {
+                  key: "q3",
+                  label: "Quadran III (21-40%)",
+                  color: "bg-orange-100 border-orange-500 hover:bg-orange-200",
+                  data: quadrantData.memastikan.q3,
+                },
+                {
+                  key: "q4",
+                  label: "Quadran IV (0-20%)",
+                  color: "bg-red-100 border-red-500 hover:bg-red-200",
+                  data: quadrantData.memastikan.q4,
+                },
+              ].map((quad) => (
+                <div
+                  key={quad.key}
+                  className={`border-2 rounded-lg p-4 text-center cursor-pointer ${quad.color}`}
+                  onClick={() =>
+                    openQuadrantDetail(
+                      "memastikan",
+                      quad.key,
+                      quad.label,
+                      quad.data.items
+                    )
+                  }
+                >
+                  <div className="text-2xl font-bold">{quad.data.count}</div>
+                  <div className="text-sm mt-1">{quad.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Quadrant Mengupayakan - Responsif */}
+          <div className="border rounded-lg p-4 shadow-sm">
+            <h3 className="font-medium text-center mb-4">
+              Kategori Mengupayakan
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                {
+                  key: "q1",
+                  label: "Quadran I (9+ bulan)",
+                  color: "bg-green-100 border-green-500 hover:bg-green-200",
+                  data: quadrantData.mengupayakan.q1,
+                },
+                {
+                  key: "q2",
+                  label: "Quadran II (6-8 bulan)",
+                  color: "bg-yellow-100 border-yellow-500 hover:bg-yellow-200",
+                  data: quadrantData.mengupayakan.q2,
+                },
+                {
+                  key: "q3",
+                  label: "Quadran III (3-5 bulan)",
+                  color: "bg-orange-100 border-orange-500 hover:bg-orange-200",
+                  data: quadrantData.mengupayakan.q3,
+                },
+                {
+                  key: "q4",
+                  label: "Quadran IV (0-2 bulan)",
+                  color: "bg-red-100 border-red-500 hover:bg-red-200",
+                  data: quadrantData.mengupayakan.q4,
+                },
+              ].map((quad) => (
+                <div
+                  key={quad.key}
+                  className={`border-2 rounded-lg p-4 text-center cursor-pointer ${quad.color}`}
+                  onClick={() =>
+                    openQuadrantDetail(
+                      "mengupayakan",
+                      quad.key,
+                      quad.label,
+                      quad.data.items
+                    )
+                  }
+                >
+                  <div className="text-2xl font-bold">{quad.data.count}</div>
+                  <div className="text-sm mt-1">{quad.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Quadrant Menambahkan - Responsif */}
+          <div className="border rounded-lg p-4 shadow-sm">
+            <h3 className="font-medium text-center mb-4">
+              Kategori Menambahkan
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                {
+                  key: "q1",
+                  label: "Quadran I (15+ Nopol)",
+                  color: "bg-green-100 border-green-500 hover:bg-green-200",
+                  data: quadrantData.menambahkan.q1,
+                },
+                {
+                  key: "q2",
+                  label: "Quadran II (11-14 nopol)",
+                  color: "bg-yellow-100 border-yellow-500 hover:bg-yellow-200",
+                  data: quadrantData.menambahkan.q2,
+                },
+                {
+                  key: "q3",
+                  label: "Quadran III (6-10 nopol)",
+                  color: "bg-orange-100 border-orange-500 hover:bg-orange-200",
+                  data: quadrantData.menambahkan.q3,
+                },
+                {
+                  key: "q4",
+                  label: "Quadran IV (0-5 nopol)",
+                  color: "bg-red-100 border-red-500 hover:bg-red-200",
+                  data: quadrantData.menambahkan.q4,
+                },
+              ].map((quad) => (
+                <div
+                  key={quad.key}
+                  className={`border-2 rounded-lg p-4 text-center cursor-pointer ${quad.color}`}
+                  onClick={() =>
+                    openQuadrantDetail(
+                      "menambahkan",
+                      quad.key,
+                      quad.label,
+                      quad.data.items
+                    )
+                  }
+                >
+                  <div className="text-2xl font-bold">{quad.data.count}</div>
+                  <div className="text-sm mt-1">{quad.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Popup Detail Quadrant */}
+      {quadrantDetail && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h3 className="text-lg font-bold">
+                {quadrantDetail.category === "memastikan" && "Memastikan: "}
+                {quadrantDetail.category === "mengupayakan" && "Mengupayakan: "}
+                {quadrantDetail.category === "menambahkan" && "Menambahkan: "}
+                {quadrantDetail.title}
+              </h3>
+              <button
+                onClick={() => setQuadrantDetail(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-grow p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {quadrantDetail.items.length > 0 ? (
+                  quadrantDetail.items.map((item, idx) => (
+                    <div key={idx} className="bg-gray-50 p-3 rounded border">
+                      <div className="font-medium">{item}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-2 text-center py-8 text-gray-500">
+                    Tidak ada loket dalam kategori ini
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="p-4 border-t text-right">
+              <button
+                onClick={() => setQuadrantDetail(null)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Tabel Data Memastikan */}
       <div>
-        <p>Memastikan Data</p>
+        <p className="font-medium mb-2">Memastikan Data</p>
         <div className="overflow-auto rounded-lg border shadow-md">
           <Table>
             <TableHeader className="bg-gray-100">
@@ -1135,14 +1399,14 @@ const MemastikanData = ({
               {filteredData
                 .filter(
                   (row) =>
-                    row.loketKantor === "LOKET KEDUNGSAPUR" ||
-                    row.loketKantor === "PERWAKILAN SURAKARTA" ||
-                    row.loketKantor === "PERWAKILAN MAGELANG" ||
-                    row.loketKantor === "PERWAKILAN PURWOKERTO" ||
-                    row.loketKantor === "PERWAKILAN PEKALONGAN" ||
-                    row.loketKantor === "PERWAKILAN PATI" ||
-                    row.loketKantor === "PERWAKILAN SEMARANG" ||
-                    row.loketKantor === "PERWAKILAN SUKOHARJO"
+                    row.loketKantor === "KANWIL JAWA TENGAH" ||
+                    row.loketKantor === "CABANG SURAKARTA" ||
+                    row.loketKantor === "CABANG MAGELANG" ||
+                    row.loketKantor === "CABANG PURWOKERTO" ||
+                    row.loketKantor === "CABANG PEKALONGAN" ||
+                    row.loketKantor === "CABANG PATI" ||
+                    row.loketKantor === "CABANG SEMARANG" ||
+                    row.loketKantor === "CABANG SUKOHARJO"
                 )
                 .map((row) => {
                   const subTotalRow = filteredData.find(
@@ -1157,7 +1421,7 @@ const MemastikanData = ({
                 })
                 .sort((a, b) => b.memastikanPersen - a.memastikanPersen)
                 .map((row, index) => (
-                  <TableRow key={index} className="bg-blue-50 font-semibold">
+                  <TableRow key={index} className="bg-purple-50 font-semibold">
                     {[
                       <TableCell key="no" className="text-center">
                         {index + 1}
@@ -1191,14 +1455,14 @@ const MemastikanData = ({
               {filteredData
                 .filter(
                   (row) =>
-                    row.loketKantor === "LOKET KEDUNGSAPUR" ||
-                    row.loketKantor === "PERWAKILAN SURAKARTA" ||
-                    row.loketKantor === "PERWAKILAN MAGELANG" ||
-                    row.loketKantor === "PERWAKILAN PURWOKERTO" ||
-                    row.loketKantor === "PERWAKILAN PEKALONGAN" ||
-                    row.loketKantor === "PERWAKILAN PATI" ||
-                    row.loketKantor === "PERWAKILAN SEMARANG" ||
-                    row.loketKantor === "PERWAKILAN SUKOHARJO"
+                    row.loketKantor === "KANWIL JAWA TENGAH" ||
+                    row.loketKantor === "CABANG SURAKARTA" ||
+                    row.loketKantor === "CABANG MAGELANG" ||
+                    row.loketKantor === "CABANG PURWOKERTO" ||
+                    row.loketKantor === "CABANG PEKALONGAN" ||
+                    row.loketKantor === "CABANG PATI" ||
+                    row.loketKantor === "CABANG SEMARANG" ||
+                    row.loketKantor === "CABANG SUKOHARJO"
                 )
                 .map((row) => {
                   const subTotalRow = filteredData.find(
@@ -1244,14 +1508,14 @@ const MemastikanData = ({
               {filteredData
                 .filter(
                   (row) =>
-                    row.loketKantor === "LOKET KEDUNGSAPUR" ||
-                    row.loketKantor === "PERWAKILAN SURAKARTA" ||
-                    row.loketKantor === "PERWAKILAN MAGELANG" ||
-                    row.loketKantor === "PERWAKILAN PURWOKERTO" ||
-                    row.loketKantor === "PERWAKILAN PEKALONGAN" ||
-                    row.loketKantor === "PERWAKILAN PATI" ||
-                    row.loketKantor === "PERWAKILAN SEMARANG" ||
-                    row.loketKantor === "PERWAKILAN SUKOHARJO"
+                    row.loketKantor === "KANWIL JAWA TENGAH" ||
+                    row.loketKantor === "CABANG SURAKARTA" ||
+                    row.loketKantor === "CABANG MAGELANG" ||
+                    row.loketKantor === "CABANG PURWOKERTO" ||
+                    row.loketKantor === "CABANG PEKALONGAN" ||
+                    row.loketKantor === "CABANG PATI" ||
+                    row.loketKantor === "CABANG SEMARANG" ||
+                    row.loketKantor === "CABANG SUKOHARJO"
                 )
                 .map((row) => {
                   const subTotalRow = filteredData.find(
