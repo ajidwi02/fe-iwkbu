@@ -52,11 +52,16 @@ interface GapDetail {
   tgl_transaksi: string;
 }
 
+interface QuadrantEntry {
+  loket: string;
+  value: number;
+}
+
 interface QuadrantData {
-  q1: { count: number; items: string[] };
-  q2: { count: number; items: string[] };
-  q3: { count: number; items: string[] };
-  q4: { count: number; items: string[] };
+  q1: { count: number; items: QuadrantEntry[] };
+  q2: { count: number; items: QuadrantEntry[] };
+  q3: { count: number; items: QuadrantEntry[] };
+  q4: { count: number; items: QuadrantEntry[] };
 }
 
 interface RekapRow {
@@ -502,7 +507,7 @@ const MemastikanData = ({
     category: string;
     quadrant: string;
     title: string;
-    items: string[];
+    items: QuadrantEntry[];
   } | null>(null);
 
   // Fungsi untuk membuka detail quadrant
@@ -510,7 +515,7 @@ const MemastikanData = ({
     category: string,
     quadrant: string,
     title: string,
-    items: string[]
+    items: QuadrantEntry[]
   ) => {
     setQuadrantDetail({ category, quadrant, title, items });
   };
@@ -973,83 +978,115 @@ const MemastikanData = ({
   const quadrantData = useMemo(() => {
     if (!rekapData.length) return null;
 
-    const memastikanQuadrants = {
-      q1: { count: 0, items: [] as string[] },
-      q2: { count: 0, items: [] as string[] },
-      q3: { count: 0, items: [] as string[] },
-      q4: { count: 0, items: [] as string[] },
+    const memastikanQuadrants: QuadrantData = {
+      q1: { count: 0, items: [] },
+      q2: { count: 0, items: [] },
+      q3: { count: 0, items: [] },
+      q4: { count: 0, items: [] },
     };
 
-    const mengupayakanQuadrants = {
-      q1: { count: 0, items: [] as string[] },
-      q2: { count: 0, items: [] as string[] },
-      q3: { count: 0, items: [] as string[] },
-      q4: { count: 0, items: [] as string[] },
+    const mengupayakanQuadrants: QuadrantData = {
+      q1: { count: 0, items: [] },
+      q2: { count: 0, items: [] },
+      q3: { count: 0, items: [] },
+      q4: { count: 0, items: [] },
     };
 
-    const menambahkanQuadrants = {
-      q1: { count: 0, items: [] as string[] },
-      q2: { count: 0, items: [] as string[] },
-      q3: { count: 0, items: [] as string[] },
-      q4: { count: 0, items: [] as string[] },
+    const menambahkanQuadrants: QuadrantData = {
+      q1: { count: 0, items: [] },
+      q2: { count: 0, items: [] },
+      q3: { count: 0, items: [] },
+      q4: { count: 0, items: [] },
     };
 
     rekapData.forEach((row) => {
-      if (
-        row.loketKantor === "SUB TOTAL" ||
-        row.loketKantor === "GRAND TOTAL" ||
-        row.loketKantor.startsWith("LOKET") ||
-        row.loketKantor.startsWith("PERWAKILAN")
-      ) {
-        return;
-      }
+      const isRealLoket = loketMapping.some(
+        (loket) => loket.childLoket === row.loketKantor
+      );
+      if (!isRealLoket) return;
 
       // Klasifikasi Memastikan
       const memastikanPercent = row.memastikanPersen * 100;
       if (memastikanPercent >= 61) {
         memastikanQuadrants.q1.count++;
-        memastikanQuadrants.q1.items.push(row.loketKantor);
+        memastikanQuadrants.q1.items.push({
+          loket: row.loketKantor,
+          value: memastikanPercent,
+        });
       } else if (memastikanPercent >= 41) {
         memastikanQuadrants.q2.count++;
-        memastikanQuadrants.q2.items.push(row.loketKantor);
+        memastikanQuadrants.q2.items.push({
+          loket: row.loketKantor,
+          value: memastikanPercent,
+        });
       } else if (memastikanPercent >= 21) {
         memastikanQuadrants.q3.count++;
-        memastikanQuadrants.q3.items.push(row.loketKantor);
+        memastikanQuadrants.q3.items.push({
+          loket: row.loketKantor,
+          value: memastikanPercent,
+        });
       } else {
         memastikanQuadrants.q4.count++;
-        memastikanQuadrants.q4.items.push(row.loketKantor);
+        memastikanQuadrants.q4.items.push({
+          loket: row.loketKantor,
+          value: memastikanPercent,
+        });
       }
 
       // Klasifikasi Mengupayakan
       const mengupayakanValue = row.mengupayakan || 0;
       if (mengupayakanValue >= 9) {
         mengupayakanQuadrants.q1.count++;
-        mengupayakanQuadrants.q1.items.push(row.loketKantor);
+        mengupayakanQuadrants.q1.items.push({
+          loket: row.loketKantor,
+          value: mengupayakanValue,
+        });
       } else if (mengupayakanValue >= 6) {
         mengupayakanQuadrants.q2.count++;
-        mengupayakanQuadrants.q2.items.push(row.loketKantor);
+        mengupayakanQuadrants.q2.items.push({
+          loket: row.loketKantor,
+          value: mengupayakanValue,
+        });
       } else if (mengupayakanValue >= 3) {
         mengupayakanQuadrants.q3.count++;
-        mengupayakanQuadrants.q3.items.push(row.loketKantor);
+        mengupayakanQuadrants.q3.items.push({
+          loket: row.loketKantor,
+          value: mengupayakanValue,
+        });
       } else {
         mengupayakanQuadrants.q4.count++;
-        mengupayakanQuadrants.q4.items.push(row.loketKantor);
+        mengupayakanQuadrants.q4.items.push({
+          loket: row.loketKantor,
+          value: mengupayakanValue,
+        });
       }
 
       // Klasifikasi Menambahkan
       const menambahkanValue = row.menambahkanNopol || 0;
       if (menambahkanValue >= 15) {
         menambahkanQuadrants.q1.count++;
-        menambahkanQuadrants.q1.items.push(row.loketKantor);
+        menambahkanQuadrants.q1.items.push({
+          loket: row.loketKantor,
+          value: menambahkanValue,
+        });
       } else if (menambahkanValue >= 11) {
         menambahkanQuadrants.q2.count++;
-        menambahkanQuadrants.q2.items.push(row.loketKantor);
+        menambahkanQuadrants.q2.items.push({
+          loket: row.loketKantor,
+          value: menambahkanValue,
+        });
       } else if (menambahkanValue >= 6) {
         menambahkanQuadrants.q3.count++;
-        menambahkanQuadrants.q3.items.push(row.loketKantor);
+        menambahkanQuadrants.q3.items.push({
+          loket: row.loketKantor,
+          value: menambahkanValue,
+        });
       } else {
         menambahkanQuadrants.q4.count++;
-        menambahkanQuadrants.q4.items.push(row.loketKantor);
+        menambahkanQuadrants.q4.items.push({
+          loket: row.loketKantor,
+          value: menambahkanValue,
+        });
       }
     });
 
@@ -1177,7 +1214,7 @@ const MemastikanData = ({
             <h3 className="font-medium text-center mb-4">
               Kategori Memastikan
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4">
               {[
                 {
                   key: "q1",
@@ -1362,7 +1399,15 @@ const MemastikanData = ({
                 {quadrantDetail.items.length > 0 ? (
                   quadrantDetail.items.map((item, idx) => (
                     <div key={idx} className="bg-gray-50 p-3 rounded border">
-                      <div className="font-medium">{item}</div>
+                      <div className="font-medium">{item.loket}</div>
+                      <div className="text-sm text-gray-600">
+                        {quadrantDetail.category === "memastikan" &&
+                          `${item.value.toFixed(2)}%`}
+                        {quadrantDetail.category === "mengupayakan" &&
+                          `${item.value} bulan`}
+                        {quadrantDetail.category === "menambahkan" &&
+                          `${item.value} nopol`}
+                      </div>
                     </div>
                   ))
                 ) : (
