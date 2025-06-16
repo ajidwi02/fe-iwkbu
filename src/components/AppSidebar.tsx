@@ -34,6 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 // Menu items.
 const items = [
@@ -64,7 +65,7 @@ const AppSidebar = () => {
               <Link href="/">
                 <User2 />
                 {/* <Image src="/logo.svg" alt="logo" width={20} height={20} /> */}
-                <span>Djojo</span>
+                <span>GUNTUR DWI SAPUTRA</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -92,13 +93,10 @@ const AppSidebar = () => {
       </SidebarContent>
 
       <div className="px-4 py-2">
-        <Image
-          src="/logo.png"
-          alt="Sidebar Banner"
-          width={200}
-          height={150}
-          className="rounded-md object-cover"
-        />
+        <Avatar>
+          <AvatarImage src="/images/avatars/gntr.jpg" />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
       </div>
 
       <SidebarFooter>
@@ -107,7 +105,7 @@ const AppSidebar = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <User2 /> Djojo <ChevronUp className="ml-auto" />
+                  <User2 /> GUNTUR DWI SAPUTRA <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

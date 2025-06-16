@@ -85,48 +85,50 @@ interface RekapRow {
   mengupayakanCount: number;
 }
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
+
 const loketMapping = [
   {
     no: 1,
     parentLoket: "KANWIL JAWA TENGAH",
     childLoket: "LOKET KANWIL JAWA TENGAH",
     petugas: "GUNTUR DWI SAPUTRA",
-    endpoint: "http://103.152.242.34:8080/loketcabangjawatengah",
+    endpoint: `${BASE_URL}/loketcabangjawatengah`,
   },
   {
     no: 2,
     parentLoket: "",
     childLoket: "SAMSAT KENDAL",
     petugas: "HEIRTANA HANDIETRA",
-    endpoint: "http://103.152.242.34:8080/samsatkendal",
+    endpoint: `${BASE_URL}/samsatkendal`,
   },
   {
     no: 3,
     parentLoket: "",
     childLoket: "SAMSAT DEMAK",
     petugas: "TIARA HAPSARI",
-    endpoint: "http://103.152.242.34:8080/samsatdemak", //data gagal terambil
+    endpoint: `${BASE_URL}/samsatdemak`, //data gagal terambil
   },
   {
     no: 4,
     parentLoket: "",
     childLoket: "SAMSAT PURWODADI",
     petugas: "ADI SETIAWAN",
-    endpoint: "http://103.152.242.34:8080/samsatpurwodadi",
+    endpoint: `${BASE_URL}/samsatpurwodadi`,
   },
   {
     no: 5,
     parentLoket: "",
     childLoket: "SAMSAT UNGARAN",
     petugas: "MAHENDRA DWI HEISTRIANTO",
-    endpoint: "http://103.152.242.34:8080/samsatungaran",
+    endpoint: `${BASE_URL}/samsatungaran`,
   },
   {
     no: 6,
     parentLoket: "",
     childLoket: "SAMSAT SALATIGA",
     petugas: "RIKA WAHYU UTAMI",
-    endpoint: "http://103.152.242.34:8080/samsatsalatiga",
+    endpoint: `${BASE_URL}/samsatsalatiga`,
   },
 
   // Wilayah Surakarta
@@ -135,49 +137,49 @@ const loketMapping = [
     parentLoket: "CABANG SURAKARTA",
     childLoket: "LOKET CABANG SURAKARTA",
     petugas: "M. ROSYID ABDURRACHMAN",
-    endpoint: "http://103.152.242.34:8080/samsatlokperwsra",
+    endpoint: `${BASE_URL}/samsatlokperwsra`,
   },
   {
     no: 8,
     parentLoket: "",
     childLoket: "SAMSAT SURAKARTA",
     petugas: "HARI SETIAWAN",
-    endpoint: "http://103.152.242.34:8080/samsatsurakarta",
+    endpoint: `${BASE_URL}/samsatsurakarta`,
   },
   {
     no: 9,
     parentLoket: "",
     childLoket: "SAMSAT KLATEN",
     petugas: "R ANTON PRASETYO",
-    endpoint: "http://103.152.242.34:8080/samsatklaten",
+    endpoint: `${BASE_URL}/samsatklaten`,
   },
   {
     no: 10,
     parentLoket: "",
     childLoket: "SAMSAT BOYOLALI",
     petugas: "RIO AQIL TITA",
-    endpoint: "http://103.152.242.34:8080/samsatboyolali",
+    endpoint: `${BASE_URL}/samsatboyolali`,
   },
   {
     no: 11,
     parentLoket: "",
     childLoket: "SAMSAT SRAGEN",
     petugas: "ARIE SOFIANTO",
-    endpoint: "http://103.152.242.34:8080/samsatsragen",
+    endpoint: `${BASE_URL}/samsatsragen`,
   },
   {
     no: 12,
     parentLoket: "",
     childLoket: "SAMSAT PRAMBANAN",
     petugas: "ARISTO YANLIAR",
-    endpoint: "http://103.152.242.34:8080/samsatprambanan",
+    endpoint: `${BASE_URL}/samsatprambanan`,
   },
   {
     no: 13,
     parentLoket: "",
     childLoket: "SAMSAT DELANGGU",
     petugas: "SURYO BAGUS LUDIRO",
-    endpoint: "http://103.152.242.34:8080/samsatdelanggu",
+    endpoint: `${BASE_URL}/samsatdelanggu`,
   },
 
   // Wilayah Magelang
@@ -186,56 +188,56 @@ const loketMapping = [
     parentLoket: "CABANG MAGELANG",
     childLoket: "LOKET CABANG MAGELANG",
     petugas: "MAHARIS",
-    endpoint: "http://103.152.242.34:8080/samsatlokpwkmgl",
+    endpoint: `${BASE_URL}/samsatlokpwkmgl`,
   },
   {
     no: 15,
     parentLoket: "",
     childLoket: "SAMSAT MAGELANG",
     petugas: "BAGAS JATI INDRA SETIAWAN",
-    endpoint: "http://103.152.242.34:8080/samsatmagelang",
+    endpoint: `${BASE_URL}/samsatmagelang`,
   },
   {
     no: 16,
     parentLoket: "",
     childLoket: "SAMSAT PURWOREJO",
     petugas: "SEPTIAN ADE R.R",
-    endpoint: "http://103.152.242.34:8080/samsatpurworejo",
+    endpoint: `${BASE_URL}/samsatpurworejo`,
   },
   {
     no: 17,
     parentLoket: "",
     childLoket: "SAMSAT KEBUMEN",
     petugas: "TUTIK WURYANTARI",
-    endpoint: "http://103.152.242.34:8080/samsatkebumen",
+    endpoint: `${BASE_URL}/samsatkebumen`,
   },
   {
     no: 18,
     parentLoket: "",
     childLoket: "SAMSAT TEMANGGUNG",
     petugas: "IKA WINANDITA SARI",
-    endpoint: "http://103.152.242.34:8080/samsattemanggung",
+    endpoint: `${BASE_URL}/samsattemanggung`,
   },
   {
     no: 19,
     parentLoket: "",
     childLoket: "SAMSAT WONOSOBO",
     petugas: "TYSON ADHY PAMUNGKAS",
-    endpoint: "http://103.152.242.34:8080/samsatwonosobo",
+    endpoint: `${BASE_URL}/samsatwonosobo`,
   },
   {
     no: 20,
     parentLoket: "",
     childLoket: "SAMSAT MUNGKID",
     petugas: "DANY YULIANANTO",
-    endpoint: "http://103.152.242.34:8080/samsatmungkid",
+    endpoint: `${BASE_URL}/samsatmungkid`,
   },
   {
     no: 21,
     parentLoket: "",
     childLoket: "SAMSAT BAGELEN",
     petugas: "WINOTO PUJO RUMIESGO",
-    endpoint: "http://103.152.242.34:8080/samsatbagelen",
+    endpoint: `${BASE_URL}/samsatbagelen`,
   },
 
   // Wilayah Purwokerto
@@ -244,49 +246,49 @@ const loketMapping = [
     parentLoket: "CABANG PURWOKERTO",
     childLoket: "LOKET CABANG PURWOKERTO",
     petugas: "ARMA HEDITA S.R.",
-    endpoint: "http://103.152.242.34:8080/samsatlokprwpwt",
+    endpoint: `${BASE_URL}/samsatlokprwpwt`,
   },
   {
     no: 23,
     parentLoket: "",
     childLoket: "SAMSAT PURWOKERTO",
     petugas: "ILHAM A.POHAN",
-    endpoint: "http://103.152.242.34:8080/samsat/purwokerto",
+    endpoint: `${BASE_URL}/samsat/purwokerto`,
   },
   {
     no: 24,
     parentLoket: "",
     childLoket: "SAMSAT PURBALINGGA",
     petugas: "AHMAD IMRAN RASIDI",
-    endpoint: "http://103.152.242.34:8080/samsat/purbalingga",
+    endpoint: `${BASE_URL}/samsat/purbalingga`,
   },
   {
     no: 25,
     parentLoket: "",
     childLoket: "SAMSAT BANJARNEGARA",
     petugas: "AFRIYANSYA PRAYUGO",
-    endpoint: "http://103.152.242.34:8080/samsat/banjarnegara", //data gagal terambil
+    endpoint: `${BASE_URL}/samsat/banjarnegara`, //data gagal terambil
   },
   {
     no: 26,
     parentLoket: "",
     childLoket: "SAMSAT MAJENANG",
     petugas: "LIA PUJI UTANTO",
-    endpoint: "http://103.152.242.34:8080/samsat/majenang",
+    endpoint: `${BASE_URL}/samsat/majenang`,
   },
   {
     no: 27,
     parentLoket: "",
     childLoket: "SAMSAT CILACAP",
     petugas: "WIDI ANTORO",
-    endpoint: "http://103.152.242.34:8080/samsat/cilacap",
+    endpoint: `${BASE_URL}/samsat/cilacap`,
   },
   {
     no: 28,
     parentLoket: "",
     childLoket: "SAMSAT WANGON",
     petugas: "RIZKY DWI HATMO N.",
-    endpoint: "http://103.152.242.34:8080/samsat/wangon",
+    endpoint: `${BASE_URL}/samsat/wangon`,
   },
 
   // Wilayah Pekalongan
@@ -295,70 +297,70 @@ const loketMapping = [
     parentLoket: "CABANG PEKALONGAN",
     childLoket: "LOKET CABANG PEKALONGAN",
     petugas: "WAHYU AKBAR ADIGUNA",
-    endpoint: "http://103.152.242.34:8080/samsat/lokprwpkl",
+    endpoint: `${BASE_URL}/samsat/lokprwpkl`,
   },
   {
     no: 30,
     parentLoket: "",
     childLoket: "SAMSAT PEKALONGAN",
     petugas: "YUDHO TIGO PRAKOSO",
-    endpoint: "http://103.152.242.34:8080/samsat/pekalongan",
+    endpoint: `${BASE_URL}/samsat/pekalongan`,
   },
   {
     no: 31,
     parentLoket: "",
     childLoket: "SAMSAT PEMALANG",
     petugas: "ENDY ARYAGUNAWAN A.A",
-    endpoint: "http://103.152.242.34:8080/samsat/pemalang",
+    endpoint: `${BASE_URL}/samsat/pemalang`,
   },
   {
     no: 32,
     parentLoket: "",
     childLoket: "SAMSAT TEGAL",
     petugas: "M.SOFYAN ARIFIN MARSETYO",
-    endpoint: "http://103.152.242.34:8080/samsat/tegal",
+    endpoint: `${BASE_URL}/samsat/tegal`,
   },
   {
     no: 33,
     parentLoket: "",
     childLoket: "SAMSAT BREBES",
     petugas: "KRISTANTO PRATAMA",
-    endpoint: "http://103.152.242.34:8080/samsat/brebes",
+    endpoint: `${BASE_URL}/samsat/brebes`,
   },
   {
     no: 34,
     parentLoket: "",
     childLoket: "SAMSAT BATANG",
     petugas: "SEPTIN DIAH KURNIAWATI",
-    endpoint: "http://103.152.242.34:8080/samsat/batang",
+    endpoint: `${BASE_URL}/samsat/batang`,
   },
   {
     no: 35,
     parentLoket: "",
     childLoket: "SAMSAT KAJEN",
     petugas: "YUDHI BAGUS KURNIAWATI",
-    endpoint: "http://103.152.242.34:8080/samsat/kajen",
+    endpoint: `${BASE_URL}/samsat/kajen`,
   },
   {
     no: 36,
     parentLoket: "",
     childLoket: "SAMSAT SLAWI",
     petugas: "WASKITO ADHI ARIYANTO",
-    endpoint: "http://103.152.242.34:8080/samsat/slawi",
+    endpoint: `${BASE_URL}/samsat/slawi`,
   },
   {
     no: 37,
     parentLoket: "",
     childLoket: "SAMSAT BUMIAYU",
     petugas: "HARI SUDJATNIKO",
-    endpoint: "http://103.152.242.34:8080/samsat/bumiayu",
+    endpoint: `${BASE_URL}/samsat/bumiayu`,
   },
   {
     no: 38,
     parentLoket: "",
     childLoket: "SAMSAT TANJUNG",
     petugas: "MAGDALENA SIAHAAN",
-    endpoint: "http://103.152.242.34:8080/samsat/tanjung",
+    endpoint: `${BASE_URL}/samsat/tanjung`,
   },
 
   // Wilayah Pati
@@ -367,49 +369,49 @@ const loketMapping = [
     parentLoket: "CABANG PATI",
     childLoket: "LOKET CABANG PATI",
     petugas: "YEKTI KUMALA SARI",
-    endpoint: "http://103.152.242.34:8080/samsat/lokprwpti",
+    endpoint: `${BASE_URL}/samsat/lokprwpti`,
   },
   {
     no: 40,
     parentLoket: "",
     childLoket: "SAMSAT PATI",
     petugas: "ARIA BRAMANTO",
-    endpoint: "http://103.152.242.34:8080/samsat/pati",
+    endpoint: `${BASE_URL}/samsat/pati`,
   },
   {
     no: 41,
     parentLoket: "",
     childLoket: "SAMSAT KUDUS",
     petugas: "AGUS MUJAYANTO",
-    endpoint: "http://103.152.242.34:8080/samsat/kudus",
+    endpoint: `${BASE_URL}/samsat/kudus`,
   },
   {
     no: 42,
     parentLoket: "",
     childLoket: "SAMSAT JEPARA",
     petugas: "IWAN BACHTIAR",
-    endpoint: "http://103.152.242.34:8080/samsat/jepara",
+    endpoint: `${BASE_URL}/samsat/jepara`,
   },
   {
     no: 43,
     parentLoket: "",
     childLoket: "SAMSAT REMBANG",
     petugas: "ADHIYANTO",
-    endpoint: "http://103.152.242.34:8080/samsat/rembang",
+    endpoint: `${BASE_URL}/samsat/rembang`,
   },
   {
     no: 44,
     parentLoket: "",
     childLoket: "SAMSAT BLORA",
     petugas: "WAHYUL HUDA",
-    endpoint: "http://103.152.242.34:8080/samsat/blora",
+    endpoint: `${BASE_URL}/samsat/blora`,
   },
   {
     no: 45,
     parentLoket: "",
     childLoket: "SAMSAT CEPU",
     petugas: "MUHAMMAD FAHRUDDIN",
-    endpoint: "http://103.152.242.34:8080/samsat/cepu",
+    endpoint: `${BASE_URL}/samsat/cepu`,
   },
   // Wilayah Semarang
   {
@@ -417,28 +419,28 @@ const loketMapping = [
     parentLoket: "CABANG SEMARANG",
     childLoket: "LOKET CABANG SEMARANG",
     petugas: "ARIEF EKA SETIAWAN",
-    endpoint: "http://103.152.242.34:8080/samsat/lokprwsmg",
+    endpoint: `${BASE_URL}/samsat/lokprwsmg`,
   },
   {
     no: 47,
     parentLoket: "",
     childLoket: "SAMSAT SEMARANG I",
     petugas: "BIMO",
-    endpoint: "http://103.152.242.34:8080/samsat/semarang1",
+    endpoint: `${BASE_URL}/samsat/semarang1`,
   },
   {
     no: 48,
     parentLoket: "",
     childLoket: "SAMSAT SEMARANG II",
     petugas: "ADITYA GINANJAR INDRASAKTI",
-    endpoint: "http://103.152.242.34:8080/samsat/semarang2",
+    endpoint: `${BASE_URL}/samsat/semarang2`,
   },
   {
     no: 49,
     parentLoket: "",
     childLoket: "SAMSAT SEMARANG III",
     petugas: "ARIS MURDIYANTO",
-    endpoint: "http://103.152.242.34:8080/samsat/semarang3",
+    endpoint: `${BASE_URL}/samsat/semarang3`,
   },
   // Wilayah Sukoharjo
   {
@@ -446,42 +448,42 @@ const loketMapping = [
     parentLoket: "CABANG SUKOHARJO",
     childLoket: "LOKET CABANG SUKOHARJO",
     petugas: "M. HASBI",
-    endpoint: "http://103.152.242.34:8080/samsat/lokprwskh",
+    endpoint: `${BASE_URL}/samsat/lokprwskh`,
   },
   {
     no: 51,
     parentLoket: "",
     childLoket: "SAMSAT SUKOHARJO",
     petugas: "MARIA TUTI",
-    endpoint: "http://103.152.242.34:8080/samsat/sukoharjo",
+    endpoint: `${BASE_URL}/samsat/sukoharjo`,
   },
   {
     no: 52,
     parentLoket: "",
     childLoket: "SAMSAT KARANGANYAR",
     petugas: "M. WAHYUANTO",
-    endpoint: "http://103.152.242.34:8080/samsat/karanganyar",
+    endpoint: `${BASE_URL}/samsat/karanganyar`,
   },
   {
     no: 53,
     parentLoket: "",
     childLoket: "SAMSAT WONOGIRI",
     petugas: "ADISTI",
-    endpoint: "http://103.152.242.34:8080/samsat/wonogiri",
+    endpoint: `${BASE_URL}/samsat/wonogiri`,
   },
   {
     no: 54,
     parentLoket: "",
     childLoket: "SAMSAT PURWANTORO",
     petugas: "BONNY C. EDWARD",
-    endpoint: "http://103.152.242.34:8080/samsat/purwantoro",
+    endpoint: `${BASE_URL}/samsat/purwantoro`,
   },
   {
     no: 55,
     parentLoket: "",
     childLoket: "SAMSAT BATURETNO",
     petugas: "M. TAUFIKUROHMAN",
-    endpoint: "http://103.152.242.34:8080/samsat/baturetno",
+    endpoint: `${BASE_URL}/samsat/baturetno`,
   },
 ];
 
@@ -1365,8 +1367,8 @@ const MemastikanData = ({
       )}
       {/* Popup Detail Quadrant */}
       {quadrantDetail && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-lg backdrop-saturate-150 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
             <div className="p-4 border-b flex justify-between items-center">
               <h3 className="text-lg font-bold">
                 {quadrantDetail.category === "memastikan" && "Memastikan: "}
@@ -1418,12 +1420,13 @@ const MemastikanData = ({
               </div>
             </div>
             <div className="p-4 border-t text-right">
-              <button
+              <Button
                 onClick={() => setQuadrantDetail(null)}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                variant={"outline"}
+                className="min-w-[100px]"
               >
                 Tutup
-              </button>
+              </Button>
             </div>
           </div>
         </div>
