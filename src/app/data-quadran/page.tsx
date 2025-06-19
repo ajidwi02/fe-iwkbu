@@ -57,7 +57,7 @@ const DataQuadranDashboard = () => {
       {/* Header */}
       <div className="bg-gray-900 text-white py-4 px-4 md:px-8">
         <h1 className="text-xl md:text-3xl font-bold text-center uppercase leading-tight">
-          DASHBOAR DATA QUARTAL
+          DASHBOAR DATA QUADRAN
         </h1>
         <p className="text-sm md:text-base text-center mt-1 font-semibold text-white">
           CLOSING TIME | {currentTime} | JR JATENG

@@ -18,6 +18,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -504,24 +506,6 @@ const MemastikanData = ({
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [useDateRange, setUseDateRange] = useState(true);
 
-  // State baru untuk mengontrol popup
-  const [quadrantDetail, setQuadrantDetail] = useState<{
-    category: string;
-    quadrant: string;
-    title: string;
-    items: QuadrantEntry[];
-  } | null>(null);
-
-  // Fungsi untuk membuka detail quadrant
-  const openQuadrantDetail = (
-    category: string,
-    quadrant: string,
-    title: string,
-    items: QuadrantEntry[]
-  ) => {
-    setQuadrantDetail({ category, quadrant, title, items });
-  };
-
   const formatDateWithoutYear = (date: Date | null) => {
     if (!date) return "Pilih Tanggal";
     return format(date, "dd MMMM");
@@ -980,20 +964,46 @@ const MemastikanData = ({
   const quadrantData = useMemo(() => {
     if (!rekapData.length) return null;
 
+    // Data perwakilan cabang yang akan digunakan untuk visualisasi
+    const branchData = rekapData
+      .filter(
+        (row) =>
+          row.loketKantor === "KANWIL JAWA TENGAH" ||
+          row.loketKantor === "CABANG SURAKARTA" ||
+          row.loketKantor === "CABANG MAGELANG" ||
+          row.loketKantor === "CABANG PURWOKERTO" ||
+          row.loketKantor === "CABANG PEKALONGAN" ||
+          row.loketKantor === "CABANG PATI" ||
+          row.loketKantor === "CABANG SEMARANG" ||
+          row.loketKantor === "CABANG SUKOHARJO"
+      )
+      .map((row) => {
+        // Cari baris SUB TOTAL yang sesuai untuk mendapatkan nilai kalkulasi
+        const subTotalRow = rekapData.find(
+          (r) =>
+            r.loketKantor === "SUB TOTAL" &&
+            rekapData.indexOf(r) > rekapData.indexOf(row)
+        );
+        return {
+          loketKantor: row.loketKantor,
+          memastikanPersen: subTotalRow?.memastikanPersen || 0,
+          mengupayakan: subTotalRow?.mengupayakan || 0,
+          menambahkanNopol: subTotalRow?.menambahkanNopol || 0,
+        };
+      });
+
     const memastikanQuadrants: QuadrantData = {
       q1: { count: 0, items: [] },
       q2: { count: 0, items: [] },
       q3: { count: 0, items: [] },
       q4: { count: 0, items: [] },
     };
-
     const mengupayakanQuadrants: QuadrantData = {
       q1: { count: 0, items: [] },
       q2: { count: 0, items: [] },
       q3: { count: 0, items: [] },
       q4: { count: 0, items: [] },
     };
-
     const menambahkanQuadrants: QuadrantData = {
       q1: { count: 0, items: [] },
       q2: { count: 0, items: [] },
@@ -1001,94 +1011,65 @@ const MemastikanData = ({
       q4: { count: 0, items: [] },
     };
 
-    rekapData.forEach((row) => {
-      const isRealLoket = loketMapping.some(
-        (loket) => loket.childLoket === row.loketKantor
-      );
-      if (!isRealLoket) return;
-
+    branchData.forEach((row) => {
       // Klasifikasi Memastikan
       const memastikanPercent = row.memastikanPersen * 100;
+      const memastikanItem = {
+        loket: row.loketKantor,
+        value: memastikanPercent,
+      };
       if (memastikanPercent >= 61) {
         memastikanQuadrants.q1.count++;
-        memastikanQuadrants.q1.items.push({
-          loket: row.loketKantor,
-          value: memastikanPercent,
-        });
+        memastikanQuadrants.q1.items.push(memastikanItem);
       } else if (memastikanPercent >= 41) {
         memastikanQuadrants.q2.count++;
-        memastikanQuadrants.q2.items.push({
-          loket: row.loketKantor,
-          value: memastikanPercent,
-        });
+        memastikanQuadrants.q2.items.push(memastikanItem);
       } else if (memastikanPercent >= 21) {
         memastikanQuadrants.q3.count++;
-        memastikanQuadrants.q3.items.push({
-          loket: row.loketKantor,
-          value: memastikanPercent,
-        });
+        memastikanQuadrants.q3.items.push(memastikanItem);
       } else {
         memastikanQuadrants.q4.count++;
-        memastikanQuadrants.q4.items.push({
-          loket: row.loketKantor,
-          value: memastikanPercent,
-        });
+        memastikanQuadrants.q4.items.push(memastikanItem);
       }
 
       // Klasifikasi Mengupayakan
       const mengupayakanValue = row.mengupayakan || 0;
+      const mengupayakanItem = {
+        loket: row.loketKantor,
+        value: mengupayakanValue,
+      };
       if (mengupayakanValue >= 9) {
         mengupayakanQuadrants.q1.count++;
-        mengupayakanQuadrants.q1.items.push({
-          loket: row.loketKantor,
-          value: mengupayakanValue,
-        });
+        mengupayakanQuadrants.q1.items.push(mengupayakanItem);
       } else if (mengupayakanValue >= 6) {
         mengupayakanQuadrants.q2.count++;
-        mengupayakanQuadrants.q2.items.push({
-          loket: row.loketKantor,
-          value: mengupayakanValue,
-        });
+        mengupayakanQuadrants.q2.items.push(mengupayakanItem);
       } else if (mengupayakanValue >= 3) {
         mengupayakanQuadrants.q3.count++;
-        mengupayakanQuadrants.q3.items.push({
-          loket: row.loketKantor,
-          value: mengupayakanValue,
-        });
+        mengupayakanQuadrants.q3.items.push(mengupayakanItem);
       } else {
         mengupayakanQuadrants.q4.count++;
-        mengupayakanQuadrants.q4.items.push({
-          loket: row.loketKantor,
-          value: mengupayakanValue,
-        });
+        mengupayakanQuadrants.q4.items.push(mengupayakanItem);
       }
 
       // Klasifikasi Menambahkan
       const menambahkanValue = row.menambahkanNopol || 0;
+      const menambahkanItem = {
+        loket: row.loketKantor,
+        value: menambahkanValue,
+      };
       if (menambahkanValue >= 15) {
         menambahkanQuadrants.q1.count++;
-        menambahkanQuadrants.q1.items.push({
-          loket: row.loketKantor,
-          value: menambahkanValue,
-        });
+        menambahkanQuadrants.q1.items.push(menambahkanItem);
       } else if (menambahkanValue >= 11) {
         menambahkanQuadrants.q2.count++;
-        menambahkanQuadrants.q2.items.push({
-          loket: row.loketKantor,
-          value: menambahkanValue,
-        });
+        menambahkanQuadrants.q2.items.push(menambahkanItem);
       } else if (menambahkanValue >= 6) {
         menambahkanQuadrants.q3.count++;
-        menambahkanQuadrants.q3.items.push({
-          loket: row.loketKantor,
-          value: menambahkanValue,
-        });
+        menambahkanQuadrants.q3.items.push(menambahkanItem);
       } else {
         menambahkanQuadrants.q4.count++;
-        menambahkanQuadrants.q4.items.push({
-          loket: row.loketKantor,
-          value: menambahkanValue,
-        });
+        menambahkanQuadrants.q4.items.push(menambahkanItem);
       }
     });
 
@@ -1114,478 +1095,368 @@ const MemastikanData = ({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-end gap-4 rounded-md border p-4 shadow-sm">
-          {/* filter tanggal */}
-          <div className="w-full">
-            <label className="text-sm font-medium mb-1 block">
-              Filter Tanggal
-            </label>
-
-            {/* Date Range Container */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
-              {/* Start Date Picker */}
-              <div className="w-full sm:w-auto">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full sm:w-[140px] justify-start text-left font-normal text-sm",
-                        !startDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formatDateWithoutYear(startDate)}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={startDate || undefined}
-                      onSelect={(date) => {
-                        setStartDate(date || null);
-                        if (date && endDate && date > endDate) {
-                          setEndDate(null);
-                        }
-                      }}
-                      initialFocus
-                      fixedWeeks
-                      showOutsideDays
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Separator */}
-              <span className="hidden sm:inline mx-1 text-gray-500">s/d</span>
-              <span className="sm:hidden text-xs text-gray-500 text-center w-full">
-                sampai dengan
-              </span>
-
-              {/* End Date Picker */}
-              <div className="w-full sm:w-auto">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full sm:w-[140px] justify-start text-left font-normal text-sm",
-                        !endDate && "text-muted-foreground"
-                      )}
-                      disabled={!startDate}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formatDateWithoutYear(endDate)}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={endDate || undefined}
-                      onSelect={(date) => setEndDate(date || null)}
-                      initialFocus
-                      fixedWeeks
-                      showOutsideDays
-                      fromDate={startDate || undefined}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                onClick={filterDataByDate}
-                disabled={!startDate || !endDate}
-                className="w-full sm:w-auto sm:ml-2 mt-2 sm:mt-0"
-              >
-                Tampilkan
-              </Button>
-            </div>
+    <div className="space-y-8">
+      {/* Filter Section - Tetap sama */}
+      <div className="flex flex-col sm:flex-row sm:items-end gap-4 rounded-md border p-4 shadow-sm">
+        <div className="w-full">
+          <label className="text-sm font-medium mb-1 block">
+            Filter Tanggal
+          </label>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full sm:w-[140px] justify-start text-left font-normal text-sm",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formatDateWithoutYear(startDate)}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={startDate || undefined}
+                  onSelect={(date) => {
+                    setStartDate(date || null);
+                    if (date && endDate && date > endDate) {
+                      setEndDate(null);
+                    }
+                  }}
+                  initialFocus
+                  fixedWeeks
+                  showOutsideDays
+                />
+              </PopoverContent>
+            </Popover>
+            <span className="hidden sm:inline mx-1 text-gray-500">s/d</span>
+            <span className="sm:hidden text-xs text-gray-500 text-center w-full">
+              sampai dengan
+            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full sm:w-[140px] justify-start text-left font-normal text-sm",
+                    !endDate && "text-muted-foreground"
+                  )}
+                  disabled={!startDate}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formatDateWithoutYear(endDate)}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={endDate || undefined}
+                  onSelect={(date) => setEndDate(date || null)}
+                  initialFocus
+                  fixedWeeks
+                  showOutsideDays
+                  fromDate={startDate || undefined}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button
+              onClick={filterDataByDate}
+              disabled={!startDate || !endDate}
+              className="w-full sm:w-auto sm:ml-2 mt-2 sm:mt-0"
+            >
+              Tampilkan
+            </Button>
           </div>
         </div>
       </div>
-      {/* Visualisasi Quadrant */}
-      {quadrantData && (
-        <div className="space-y-8 mt-8">
-          <h2 className="text-xl font-bold text-center">Visualisasi Kinerja</h2>
 
-          {/* Quadrant Memastikan - Responsif */}
-          <div className="border rounded-lg p-4 shadow-sm">
-            <h3 className="font-medium text-center mb-4">
-              Kategori Memastikan
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4">
-              {[
-                {
-                  key: "q1",
-                  label: "Quadran I (61-100%)",
-                  color: "bg-green-100 border-green-500 hover:bg-green-200",
-                  data: quadrantData.memastikan.q1,
-                },
-                {
-                  key: "q2",
-                  label: "Quadran II (41-60%)",
-                  color: "bg-yellow-100 border-yellow-500 hover:bg-yellow-200",
-                  data: quadrantData.memastikan.q2,
-                },
-                {
-                  key: "q3",
-                  label: "Quadran III (21-40%)",
-                  color: "bg-orange-100 border-orange-500 hover:bg-orange-200",
-                  data: quadrantData.memastikan.q3,
-                },
-                {
-                  key: "q4",
-                  label: "Quadran IV (0-20%)",
-                  color: "bg-red-100 border-red-500 hover:bg-red-200",
-                  data: quadrantData.memastikan.q4,
-                },
-              ].map((quad) => (
-                <div
-                  key={quad.key}
-                  className={`border-2 rounded-lg p-4 text-center cursor-pointer ${quad.color}`}
-                  onClick={() =>
-                    openQuadrantDetail(
-                      "memastikan",
-                      quad.key,
-                      quad.label,
-                      quad.data.items
-                    )
-                  }
-                >
-                  <div className="text-2xl font-bold">{quad.data.count}</div>
-                  <div className="text-sm mt-1">{quad.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* ============== START: LAYOUT BARU YANG DIGABUNGKAN ============== */}
 
-          {/* Quadrant Mengupayakan - Responsif */}
-          <div className="border rounded-lg p-4 shadow-sm">
-            <h3 className="font-medium text-center mb-4">
-              Kategori Mengupayakan
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                {
-                  key: "q1",
-                  label: "Quadran I (9+ bulan)",
-                  color: "bg-green-100 border-green-500 hover:bg-green-200",
-                  data: quadrantData.mengupayakan.q1,
-                },
-                {
-                  key: "q2",
-                  label: "Quadran II (6-8 bulan)",
-                  color: "bg-yellow-100 border-yellow-500 hover:bg-yellow-200",
-                  data: quadrantData.mengupayakan.q2,
-                },
-                {
-                  key: "q3",
-                  label: "Quadran III (3-5 bulan)",
-                  color: "bg-orange-100 border-orange-500 hover:bg-orange-200",
-                  data: quadrantData.mengupayakan.q3,
-                },
-                {
-                  key: "q4",
-                  label: "Quadran IV (0-2 bulan)",
-                  color: "bg-red-100 border-red-500 hover:bg-red-200",
-                  data: quadrantData.mengupayakan.q4,
-                },
-              ].map((quad) => (
-                <div
-                  key={quad.key}
-                  className={`border-2 rounded-lg p-4 text-center cursor-pointer ${quad.color}`}
-                  onClick={() =>
-                    openQuadrantDetail(
-                      "mengupayakan",
-                      quad.key,
-                      quad.label,
-                      quad.data.items
-                    )
-                  }
-                >
-                  <div className="text-2xl font-bold">{quad.data.count}</div>
-                  <div className="text-sm mt-1">{quad.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Quadrant Menambahkan - Responsif */}
-          <div className="border rounded-lg p-4 shadow-sm">
-            <h3 className="font-medium text-center mb-4">
-              Kategori Menambahkan
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                {
-                  key: "q1",
-                  label: "Quadran I (15+ Nopol)",
-                  color: "bg-green-100 border-green-500 hover:bg-green-200",
-                  data: quadrantData.menambahkan.q1,
-                },
-                {
-                  key: "q2",
-                  label: "Quadran II (11-14 nopol)",
-                  color: "bg-yellow-100 border-yellow-500 hover:bg-yellow-200",
-                  data: quadrantData.menambahkan.q2,
-                },
-                {
-                  key: "q3",
-                  label: "Quadran III (6-10 nopol)",
-                  color: "bg-orange-100 border-orange-500 hover:bg-orange-200",
-                  data: quadrantData.menambahkan.q3,
-                },
-                {
-                  key: "q4",
-                  label: "Quadran IV (0-5 nopol)",
-                  color: "bg-red-100 border-red-500 hover:bg-red-200",
-                  data: quadrantData.menambahkan.q4,
-                },
-              ].map((quad) => (
-                <div
-                  key={quad.key}
-                  className={`border-2 rounded-lg p-4 text-center cursor-pointer ${quad.color}`}
-                  onClick={() =>
-                    openQuadrantDetail(
-                      "menambahkan",
-                      quad.key,
-                      quad.label,
-                      quad.data.items
-                    )
-                  }
-                >
-                  <div className="text-2xl font-bold">{quad.data.count}</div>
-                  <div className="text-sm mt-1">{quad.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Popup Detail Quadrant */}
-      {quadrantDetail && (
-        <div className="fixed inset-0 bg-white/30 backdrop-blur-lg backdrop-saturate-150 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="text-lg font-bold">
-                {quadrantDetail.category === "memastikan" && "Memastikan: "}
-                {quadrantDetail.category === "mengupayakan" && "Mengupayakan: "}
-                {quadrantDetail.category === "menambahkan" && "Menambahkan: "}
-                {quadrantDetail.title}
+      {/* 1. Bagian Analisis Kuadran (Dengan Detail Loket) */}
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-center mb-6">
+          Analisis Kinerja Quadran
+        </h2>
+        {quadrantData && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Kolom Memastikan */}
+            <div className="border rounded-lg p-4 shadow-sm">
+              <h3 className="font-semibold text-center text-lg mb-4">
+                Memastikan
               </h3>
-              <button
-                onClick={() => setQuadrantDetail(null)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="overflow-y-auto flex-grow p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {quadrantDetail.items.length > 0 ? (
-                  quadrantDetail.items.map((item, idx) => (
-                    <div key={idx} className="bg-gray-50 p-3 rounded border">
-                      <div className="font-medium">{item.loket}</div>
-                      <div className="text-sm text-gray-600">
-                        {quadrantDetail.category === "memastikan" &&
-                          `${item.value.toFixed(2)}%`}
-                        {quadrantDetail.category === "mengupayakan" &&
-                          `${item.value} bulan`}
-                        {quadrantDetail.category === "menambahkan" &&
-                          `${item.value} nopol`}
-                      </div>
+              <div className="space-y-3">
+                {[
+                  {
+                    key: "q1",
+                    label: "Sangat Baik (61-100%)",
+                    data: quadrantData.memastikan.q1,
+                    color: "bg-green-100 border-green-500",
+                  },
+                  {
+                    key: "q2",
+                    label: "Baik (41-60%)",
+                    data: quadrantData.memastikan.q2,
+                    color: "bg-yellow-100 border-yellow-500",
+                  },
+                  {
+                    key: "q3",
+                    label: "Cukup (21-40%)",
+                    data: quadrantData.memastikan.q3,
+                    color: "bg-orange-100 border-orange-500",
+                  },
+                  {
+                    key: "q4",
+                    label: "Kurang (0-20%)",
+                    data: quadrantData.memastikan.q4,
+                    color: "bg-red-100 border-red-500",
+                  },
+                ].map((quad) => (
+                  <div
+                    key={quad.key}
+                    className={`border-2 rounded-lg p-3 ${quad.color}`}
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="font-bold">{quad.label}</div>
+                      <div className="text-xl font-bold">{quad.data.count}</div>
                     </div>
-                  ))
-                ) : (
-                  <div className="col-span-2 text-center py-8 text-gray-500">
-                    Tidak ada loket dalam kategori ini
+                    <div className="text-left text-xs space-y-1">
+                      {quad.data.items.length > 0 ? (
+                        quad.data.items
+                          .sort((a, b) => b.value - a.value)
+                          .map((item, index) => (
+                            <div
+                              key={index}
+                              className="bg-white/60 p-1.5 rounded-md flex justify-between"
+                            >
+                              <span>
+                                {index + 1}. {item.loket}
+                              </span>
+                              <span className="font-semibold">
+                                {item.value.toFixed(2)}%
+                              </span>
+                            </div>
+                          ))
+                      ) : (
+                        <p className="text-gray-500 text-center text-xs py-2">
+                          - Tidak ada data -
+                        </p>
+                      )}
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             </div>
-            <div className="p-4 border-t text-right">
-              <Button
-                onClick={() => setQuadrantDetail(null)}
-                variant={"outline"}
-                className="min-w-[100px]"
-              >
-                Tutup
-              </Button>
+
+            {/* Kolom Mengupayakan */}
+            <div className="border rounded-lg p-4 shadow-sm">
+              <h3 className="font-semibold text-center text-lg mb-4">
+                Mengupayakan
+              </h3>
+              <div className="space-y-3">
+                {[
+                  {
+                    key: "q1",
+                    label: "Sangat Baik (9+ bln)",
+                    data: quadrantData.mengupayakan.q1,
+                    color: "bg-green-100 border-green-500",
+                  },
+                  {
+                    key: "q2",
+                    label: "Baik (6-8 bln)",
+                    data: quadrantData.mengupayakan.q2,
+                    color: "bg-yellow-100 border-yellow-500",
+                  },
+                  {
+                    key: "q3",
+                    label: "Cukup (3-5 bln)",
+                    data: quadrantData.mengupayakan.q3,
+                    color: "bg-orange-100 border-orange-500",
+                  },
+                  {
+                    key: "q4",
+                    label: "Kurang (0-2 bln)",
+                    data: quadrantData.mengupayakan.q4,
+                    color: "bg-red-100 border-red-500",
+                  },
+                ].map((quad) => (
+                  <div
+                    key={quad.key}
+                    className={`border-2 rounded-lg p-3 ${quad.color}`}
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="font-bold">{quad.label}</div>
+                      <div className="text-xl font-bold">{quad.data.count}</div>
+                    </div>
+                    <div className="text-left text-xs space-y-1">
+                      {quad.data.items.length > 0 ? (
+                        quad.data.items
+                          .sort((a, b) => b.value - a.value)
+                          .map((item, index) => (
+                            <div
+                              key={index}
+                              className="bg-white/60 p-1.5 rounded-md flex justify-between"
+                            >
+                              <span>
+                                {index + 1}. {item.loket}
+                              </span>
+                              <span className="font-semibold">
+                                {item.value} bln
+                              </span>
+                            </div>
+                          ))
+                      ) : (
+                        <p className="text-gray-500 text-center text-xs py-2">
+                          - Tidak ada data -
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Kolom Menambahkan */}
+            <div className="border rounded-lg p-4 shadow-sm">
+              <h3 className="font-semibold text-center text-lg mb-4">
+                Menambahkan
+              </h3>
+              <div className="space-y-3">
+                {[
+                  {
+                    key: "q1",
+                    label: "Sangat Baik (15+ Nopol)",
+                    data: quadrantData.menambahkan.q1,
+                    color: "bg-green-100 border-green-500",
+                  },
+                  {
+                    key: "q2",
+                    label: "Baik (11-14 Nopol)",
+                    data: quadrantData.menambahkan.q2,
+                    color: "bg-yellow-100 border-yellow-500",
+                  },
+                  {
+                    key: "q3",
+                    label: "Cukup (6-10 Nopol)",
+                    data: quadrantData.menambahkan.q3,
+                    color: "bg-orange-100 border-orange-500",
+                  },
+                  {
+                    key: "q4",
+                    label: "Kurang (0-5 Nopol)",
+                    data: quadrantData.menambahkan.q4,
+                    color: "bg-red-100 border-red-500",
+                  },
+                ].map((quad) => (
+                  <div
+                    key={quad.key}
+                    className={`border-2 rounded-lg p-3 ${quad.color}`}
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="font-bold">{quad.label}</div>
+                      <div className="text-xl font-bold">{quad.data.count}</div>
+                    </div>
+                    <div className="text-left text-xs space-y-1">
+                      {quad.data.items.length > 0 ? (
+                        quad.data.items
+                          .sort((a, b) => b.value - a.value)
+                          .map((item, index) => (
+                            <div
+                              key={index}
+                              className="bg-white/60 p-1.5 rounded-md flex justify-between"
+                            >
+                              <span>
+                                {index + 1}. {item.loket}
+                              </span>
+                              <span className="font-semibold">
+                                {item.value} nopol
+                              </span>
+                            </div>
+                          ))
+                      ) : (
+                        <p className="text-gray-500 text-center text-xs py-2">
+                          - Tidak ada data -
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {/* Tabel Data Memastikan */}
+        )}
+      </div>
+
+      {/* 2. Bagian Tabel Peringkat Kinerja */}
       <div>
-        <p className="font-medium mb-2">Memastikan Data</p>
-        <div className="overflow-auto rounded-lg border shadow-md">
+        <h2 className="text-2xl font-bold tracking-tight text-center mb-6">
+          Tabel Kinerja Cabang
+        </h2>
+        <div className="border rounded-lg shadow-sm">
           <Table>
-            <TableHeader className="bg-gray-100">
+            <TableHeader className="bg-gray-50">
               <TableRow>
-                <TableHead className="w-[50px] text-center">NO URUT</TableHead>
-                <TableHead className="min-w-[200px]">LOKET</TableHead>
-                <TableHead className="text-center">NILAI (%)</TableHead>
+                <TableHead className="w-[50px] text-center">No</TableHead>
+                <TableHead className="min-w-[200px]">Kantor Cabang</TableHead>
+                <TableHead className="text-center min-w-[170px]">
+                  Memastikan (%)
+                </TableHead>
+                <TableHead className="text-center">
+                  Mengupayakan (Bulan)
+                </TableHead>
+                <TableHead className="text-center">
+                  Menambahkan (Nopol)
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData
+              {rekapData
                 .filter(
                   (row) =>
                     row.loketKantor === "KANWIL JAWA TENGAH" ||
-                    row.loketKantor === "CABANG SURAKARTA" ||
-                    row.loketKantor === "CABANG MAGELANG" ||
-                    row.loketKantor === "CABANG PURWOKERTO" ||
-                    row.loketKantor === "CABANG PEKALONGAN" ||
-                    row.loketKantor === "CABANG PATI" ||
-                    row.loketKantor === "CABANG SEMARANG" ||
-                    row.loketKantor === "CABANG SUKOHARJO"
+                    row.loketKantor.startsWith("CABANG")
                 )
                 .map((row) => {
-                  const subTotalRow = filteredData.find(
+                  const subTotalRow = rekapData.find(
                     (r) =>
                       r.loketKantor === "SUB TOTAL" &&
-                      filteredData.indexOf(r) > filteredData.indexOf(row)
+                      rekapData.indexOf(r) > rekapData.indexOf(row)
                   );
                   return {
-                    ...row,
+                    loketKantor: row.loketKantor,
                     memastikanPersen: subTotalRow?.memastikanPersen || 0,
+                    mengupayakan: subTotalRow?.mengupayakan || 0,
+                    menambahkanNopol: subTotalRow?.menambahkanNopol || 0,
                   };
                 })
                 .sort((a, b) => b.memastikanPersen - a.memastikanPersen)
                 .map((row, index) => (
-                  <TableRow key={index} className="bg-purple-50 font-semibold">
-                    {[
-                      <TableCell key="no" className="text-center">
-                        {index + 1}
-                      </TableCell>,
-                      <TableCell key="loket">{row.loketKantor}</TableCell>,
-                      <TableCell key="nilai" className="text-center">
-                        {row.memastikanPersen
-                          ? `${(row.memastikanPersen * 100).toFixed(2)}%`
-                          : "-"}
-                      </TableCell>,
-                    ]}
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-      {/* Tabel Data Mengupayakan */}
-      <div>
-        <p className="font-medium mb-2">Mengupayakan Data</p>
-        <div className="overflow-auto rounded-lg border shadow-md">
-          <Table>
-            <TableHeader className="bg-gray-100">
-              <TableRow>
-                <TableHead className="w-[50px] text-center">NO URUT</TableHead>
-                <TableHead className="min-w-[200px]">LOKET</TableHead>
-                <TableHead className="text-center">NILAI (Nopol)</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredData
-                .filter(
-                  (row) =>
-                    row.loketKantor === "KANWIL JAWA TENGAH" ||
-                    row.loketKantor === "CABANG SURAKARTA" ||
-                    row.loketKantor === "CABANG MAGELANG" ||
-                    row.loketKantor === "CABANG PURWOKERTO" ||
-                    row.loketKantor === "CABANG PEKALONGAN" ||
-                    row.loketKantor === "CABANG PATI" ||
-                    row.loketKantor === "CABANG SEMARANG" ||
-                    row.loketKantor === "CABANG SUKOHARJO"
-                )
-                .map((row) => {
-                  const subTotalRow = filteredData.find(
-                    (r) =>
-                      r.loketKantor === "SUB TOTAL" &&
-                      filteredData.indexOf(r) > filteredData.indexOf(row)
-                  );
-                  return {
-                    ...row,
-                    mengupayakan: subTotalRow?.mengupayakan || 0,
-                  };
-                })
-                .sort((a, b) => b.mengupayakan - a.mengupayakan) // Sort by mengupayakan descending
-                .map((row, index) => (
                   <TableRow
-                    key={`a-${index}`}
-                    className="bg-purple-50 font-semibold"
+                    key={index}
+                    className="font-medium hover:bg-gray-50"
                   >
-                    <TableCell className="text-center">{index + 1}</TableCell>
-                    <TableCell>{row.loketKantor}</TableCell>
-                    <TableCell className="text-center">
-                      {row.mengupayakan || "-"}
+                    <TableCell className="text-center text-lg font-bold text-gray-400">
+                      {index + 1}
                     </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-      {/* Tabel Data Menambahkan */}
-      <div>
-        <p className="font-medium mb-2">Menambahkan Data</p>
-        <div className="overflow-auto rounded-lg border shadow-md">
-          <Table>
-            <TableHeader className="bg-gray-100">
-              <TableRow>
-                <TableHead className="w-[50px] text-center">NO URUT</TableHead>
-                <TableHead className="min-w-[200px]">LOKET</TableHead>
-                <TableHead className="text-center">NILAI (Nopol)</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredData
-                .filter(
-                  (row) =>
-                    row.loketKantor === "KANWIL JAWA TENGAH" ||
-                    row.loketKantor === "CABANG SURAKARTA" ||
-                    row.loketKantor === "CABANG MAGELANG" ||
-                    row.loketKantor === "CABANG PURWOKERTO" ||
-                    row.loketKantor === "CABANG PEKALONGAN" ||
-                    row.loketKantor === "CABANG PATI" ||
-                    row.loketKantor === "CABANG SEMARANG" ||
-                    row.loketKantor === "CABANG SUKOHARJO"
-                )
-                .map((row) => {
-                  const subTotalRow = filteredData.find(
-                    (r) =>
-                      r.loketKantor === "SUB TOTAL" &&
-                      filteredData.indexOf(r) > filteredData.indexOf(row)
-                  );
-                  return {
-                    ...row,
-                    menambahkanNopol: subTotalRow?.menambahkanNopol || 0,
-                  };
-                })
-                .sort((a, b) => b.menambahkanNopol - a.menambahkanNopol) // Sort by menambahkanNopol descending
-                .map((row, index) => (
-                  <TableRow
-                    key={`a-${index}`}
-                    className="bg-purple-50 font-semibold"
-                  >
-                    <TableCell className="text-center">{index + 1}</TableCell>
                     <TableCell>{row.loketKantor}</TableCell>
                     <TableCell className="text-center">
-                      {row.menambahkanNopol || "-"}
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-bold text-base w-16">
+                          {(row.memastikanPersen * 100).toFixed(2)}%
+                        </span>
+                        <Progress
+                          value={row.memastikanPersen * 100}
+                          className="w-[60%]"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center text-base font-bold">
+                      {row.mengupayakan || "0"}
+                    </TableCell>
+                    <TableCell className="text-center text-base font-bold">
+                      {row.menambahkanNopol || "0"}
                     </TableCell>
                   </TableRow>
                 ))}

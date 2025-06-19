@@ -24,7 +24,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Plus, Minus, FileSpreadsheet } from "lucide-react";
+import { Plus, Minus, FileSpreadsheet, CornerDownRight } from "lucide-react";
 
 export interface DateRangeProps {
   startDate: Date | null;
@@ -1134,26 +1134,34 @@ const RekapDashboard = ({
 
       <div className="overflow-auto rounded-lg border shadow-md">
         <Table>
-          <TableHeader className="bg-gray-100">
+          <TableHeader className="bg-gray-900">
             <TableRow>
-              <TableHead className="w-[50px] text-center">NO</TableHead>
-              <TableHead className="min-w-[200px]">LOKET KANTOR</TableHead>
-              <TableHead className="min-w-[150px]">PETUGAS</TableHead>
-              <TableHead colSpan={2} className="text-center">
-                CHECKIN
+              <TableHead className="text-white w-[50px] text-center">
+                NO
               </TableHead>
-              <TableHead colSpan={2} className="text-center">
-                CHECKOUT
+              <TableHead className="text-white min-w-[220px]">
+                LOKET KANTOR
               </TableHead>
-              <TableHead colSpan={3} className="text-center">
+              <TableHead className="text-white min-w-[160px]">
+                PETUGAS
+              </TableHead>
+              <TableHead colSpan={2} className="text-white text-center">
+                CHECK-IN
+              </TableHead>
+              <TableHead colSpan={2} className="text-white text-center">
+                CHECK-OUT
+              </TableHead>
+              <TableHead colSpan={3} className="text-white text-center">
                 MEMASTIKAN
               </TableHead>
-              <TableHead className="text-center">GAP</TableHead>
-              <TableHead className="text-center">MENGUPAYAKAN</TableHead>
-              <TableHead colSpan={2} className="text-center">
+              <TableHead className="text-white text-center">GAP</TableHead>
+              <TableHead className="text-white text-center">
+                MENGUPAYAKAN
+              </TableHead>
+              <TableHead colSpan={2} className="text-white text-center">
                 MENAMBAHKAN
               </TableHead>
-              <TableHead colSpan={2} className="text-center">
+              <TableHead colSpan={2} className="text-white text-center">
                 PENERIMAAN LEBIH
               </TableHead>
             </TableRow>
@@ -1161,52 +1169,53 @@ const RekapDashboard = ({
               <TableHead></TableHead>
               <TableHead></TableHead>
               <TableHead></TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">RUPIAH</TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">RUPIAH</TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">RUPIAH</TableHead>
-              <TableHead className="text-center">%</TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">
-                Rata-rata Bulan Maju
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">RUPIAH</TableHead>
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">RUPIAH</TableHead>
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">RUPIAH</TableHead>
+              <TableHead className="text-white text-center">%</TableHead>
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">
+                Rata-rata
+                <br />
+                Bulan Maju
               </TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">RUPIAH</TableHead>
-              <TableHead className="text-center">NOPOL</TableHead>
-              <TableHead className="text-center">RUPIAH</TableHead>
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">RUPIAH</TableHead>
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">RUPIAH</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {rekapData.map((row, index) => {
+              // Identifikasi jenis baris
               const isGroupHeader =
                 row.loketKantor === "KANWIL JAWA TENGAH" ||
-                row.loketKantor === "CABANG SURAKARTA" ||
-                row.loketKantor === "CABANG MAGELANG" ||
-                row.loketKantor === "CABANG PURWOKERTO" ||
-                row.loketKantor === "CABANG PEKALONGAN" ||
-                row.loketKantor === "CABANG PATI" ||
-                row.loketKantor === "CABANG SEMARANG" ||
-                row.loketKantor === "CABANG SUKOHARJO";
+                row.loketKantor.startsWith("CABANG");
               const isSubTotal = row.loketKantor === "SUB TOTAL";
               const isGrandTotal = row.loketKantor === "GRAND TOTAL";
-
+              // Baris loket individual adalah baris yang bukan salah satu dari di atas
+              const isIndividualLoketRow =
+                !isGroupHeader && !isSubTotal && !isGrandTotal;
+              // Render baris header grup
               if (isGroupHeader) {
                 return (
                   <TableRow
                     key={index}
-                    className="bg-gray-100 font-medium cursor-pointer hover:bg-gray-200"
+                    className="bg-gray-800 text-white font-medium cursor-pointer hover:bg-gray-700"
                     onClick={() => toggleGroup(row.loketKantor)}
                   >
-                    <TableCell colSpan={16}>
-                      <div className="flex justify-between items-center">
-                        <span>{row.loketKantor}</span>
+                    <TableCell colSpan={16} className="px-2">
+                      <div className="flex items-center gap-3 hover:underline">
                         {expandedGroups[row.loketKantor] ? (
-                          <Minus className="w-4 h-4 text-gray-600" />
+                          <Minus className="w-4 h-4 text-gray-200" />
                         ) : (
-                          <Plus className="w-4 h-4 text-gray-600" />
+                          <Plus className="w-4 h-4 text-gray-200" />
                         )}
+                        <span>{row.loketKantor}</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1223,8 +1232,12 @@ const RekapDashboard = ({
                       r.loketKantor.startsWith("CABANG")
                   )?.loketKantor || "";
 
-              // Jika belum di-expand, jangan tampilkan row
-              if (prevGroup && !expandedGroups[prevGroup]) {
+              // Sembunyikan baris hanya jika ia adalah baris loket individual dan grup induknya ada dan di hide
+              if (
+                isIndividualLoketRow &&
+                prevGroup &&
+                !expandedGroups[prevGroup]
+              ) {
                 return null;
               }
 
@@ -1233,9 +1246,9 @@ const RekapDashboard = ({
                   key={index}
                   className={
                     isGrandTotal
-                      ? "bg-purple-50 font-bold"
+                      ? "bg-gray-900 font-bold text-white hover:bg-gray-900"
                       : isSubTotal
-                      ? "bg-blue-50 font-semibold"
+                      ? "bg-gray-900 font-bold text-white hover:bg-gray-900"
                       : ""
                   }
                 >
@@ -1247,7 +1260,14 @@ const RekapDashboard = ({
                       isSubTotal || isGrandTotal ? "font-semibold" : ""
                     }
                   >
-                    {row.loketKantor}
+                    {isSubTotal ? (
+                      <div className="flex items-center pl-2">
+                        <CornerDownRight className="w-4 h-4 mr-2 text-gray-200" />
+                        <span>{row.loketKantor}</span>
+                      </div>
+                    ) : (
+                      row.loketKantor
+                    )}
                   </TableCell>
                   <TableCell>{row.petugas}</TableCell>
                   <TableCell className="text-center">
@@ -1282,7 +1302,7 @@ const RekapDashboard = ({
                   <TableCell
                     className={`text-center ${
                       (!isGroupHeader && row.gapNopol !== 0) || isSubTotal
-                        ? "text-blue-600 cursor-pointer hover:underline font-medium"
+                        ? " cursor-pointer hover:underline font-medium "
                         : ""
                     }`}
                     onClick={() => {
@@ -1315,95 +1335,6 @@ const RekapDashboard = ({
                   </TableCell>
                 </TableRow>
               );
-              // return (
-              //   <TableRow
-              //     key={index}
-              //     className={
-              //       isGrandTotal
-              //         ? "bg-purple-50 font-bold"
-              //         : isSubTotal
-              //         ? "bg-blue-50 font-semibold"
-              //         : isGroupHeader
-              //         ? "bg-gray-100 font-medium"
-              //         : ""
-              //     }
-              //   >
-              //     <TableCell className="text-center">
-              //       {!isGroupHeader && row.no > 0 ? row.no : ""}
-              //     </TableCell>
-              //     <TableCell
-              //       className={
-              //         isSubTotal || isGrandTotal ? "font-semibold" : ""
-              //       }
-              //     >
-              //       {row.loketKantor}
-              //     </TableCell>
-              //     <TableCell>{row.petugas}</TableCell>
-              //     <TableCell className="text-center">
-              //       {row.checkinNopol > 0 ? row.checkinNopol : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-right">
-              //       {row.checkinRupiah > 0
-              //         ? formatRupiah(row.checkinRupiah)
-              //         : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-center">
-              //       {row.checkoutNopol > 0 ? row.checkoutNopol : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-right">
-              //       {row.checkoutRupiah > 0
-              //         ? formatRupiah(row.checkoutRupiah)
-              //         : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-center">
-              //       {row.memastikanNopol > 0 ? row.memastikanNopol : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-right">
-              //       {row.memastikanRupiah > 0
-              //         ? formatRupiah(row.memastikanRupiah)
-              //         : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-center">
-              //       {row.memastikanPersen > 0
-              //         ? formatPercentage(row.memastikanPersen)
-              //         : "-"}
-              //     </TableCell>
-              //     <TableCell
-              //       className={`text-center ${
-              //         (!isGroupHeader && row.gapNopol !== 0) || isSubTotal
-              //           ? "text-blue-600 cursor-pointer hover:underline font-medium"
-              //           : ""
-              //       }`}
-              //       onClick={() => {
-              //         if (
-              //           (!isGroupHeader && row.gapNopol !== 0) ||
-              //           isSubTotal
-              //         ) {
-              //           handleDetail(row);
-              //         }
-              //       }}
-              //     >
-              //       {row.gapNopol !== 0 ? row.gapNopol : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-center">
-              //       {row.mengupayakan !== 0 ? row.mengupayakan : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-center">
-              //       {row.menambahkanNopol > 0 ? row.menambahkanNopol : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-right">
-              //       {row.menambahkanRupiah > 0
-              //         ? formatRupiah(row.menambahkanRupiah)
-              //         : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-center">
-              //       {row.sisaNopol > 0 ? row.sisaNopol : "-"}
-              //     </TableCell>
-              //     <TableCell className="text-right">
-              //       {row.sisaRupiah > 0 ? formatRupiah(row.sisaRupiah) : "-"}
-              //     </TableCell>
-              //   </TableRow>
-              // );
             })}
           </TableBody>
         </Table>
