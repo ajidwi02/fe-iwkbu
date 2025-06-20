@@ -14,6 +14,14 @@ import {
 import { Button } from "./ui/button";
 import { useTheme } from "next-themes";
 import { SidebarTrigger } from "./ui/sidebar";
+import router from "next/router";
+
+const handleLogout = async () => {
+  const res = await fetch("/api/auth/logout", { method: "POST" });
+  if (res.ok) {
+    router.push("/login"); // Alihkan ke halaman login
+  }
+};
 
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
@@ -67,7 +75,7 @@ const Navbar = () => {
               <Settings className="h-[1.2rem] w-[1.2rem] mr-2" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive">
+            <DropdownMenuItem variant="destructive" onClick={handleLogout}>
               <LogOut className="h-[1.2rem] w-[1.2rem] mr-2" />
               Logout
             </DropdownMenuItem>

@@ -58,6 +58,13 @@ interface GapDetail {
   loket?: string;
 }
 
+interface MemastikanDetail {
+  nopol: string;
+  tgl_transaksi: string;
+  rupiah: number;
+  loket?: string;
+}
+
 interface RekapRow {
   no: number;
   loketKantor: string;
@@ -76,6 +83,7 @@ interface RekapRow {
   sisaNopol: number;
   sisaRupiah: number;
   gapDetails: GapDetail[];
+  memastikanDetails: MemastikanDetail[];
   mengupayakanCount: number;
 }
 
@@ -501,6 +509,7 @@ const RekapDashboard = ({
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {}
   );
+  const [detailType, setDetailType] = useState<"gap" | "memastikan">("gap");
   //fungsi expand
   const toggleGroup = (groupName: string) => {
     setExpandedGroups((prev) => ({
@@ -535,19 +544,33 @@ const RekapDashboard = ({
   };
 
   // fungsi untuk export di excel
-  const exportGapDetailsToExcel = (row: RekapRow) => {
+  const exportGapDetailsToExcel = (
+    row: RekapRow,
+    type: "gap" | "memastikan"
+  ) => {
     if (!row.gapDetails || row.gapDetails.length === 0) {
       alert("Tidak ada data GAP untuk diexport.");
       return;
     }
 
-    const dataToExport = row.gapDetails.map((item) => ({
-      Nopol: item.nopol,
-      Keterangan: item.keterangan,
-      Rupiah: item.rupiah,
-      Tanggal_Transaksi: item.tgl_transaksi,
-      Loket: item.loket || row.loketKantor,
-    }));
+    const dataToExport =
+      type === "gap"
+        ? row.gapDetails
+        : row.memastikanDetails.map((item) => ({
+            Nopol: item.nopol,
+            Tanggal_Transaksi: item.tgl_transaksi,
+            Rupiah: item.rupiah,
+            Loket: item.loket || row.loketKantor,
+          }));
+
+    if (dataToExport.length === 0) {
+      alert(
+        `Tidak ada data ${
+          type === "gap" ? "GAP" : "Memastikan"
+        } untuk diexport.`
+      );
+      return;
+    }
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
@@ -562,7 +585,11 @@ const RekapDashboard = ({
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
-    const fileName = `GAP_${row.loketKantor.replace(/\s+/g, "_")}.xlsx`;
+    const fileName = `${detailType}_${row.loketKantor.replace(
+      /\s+/g,
+      "_"
+    )}.xlsx`.toUpperCase();
+
     saveAs(blob, fileName);
   };
   const fetchData = async () => {
@@ -637,6 +664,7 @@ const RekapDashboard = ({
       const endpointData =
         data.find((d) => d.endpoint === loket.endpoint)?.data || [];
       const gapDetails: GapDetail[] = [];
+      const memastikanDetails: MemastikanDetail[] = [];
 
       const rekap: RekapRow = {
         no: loket.no,
@@ -656,6 +684,7 @@ const RekapDashboard = ({
         sisaNopol: 0,
         sisaRupiah: 0,
         gapDetails: [],
+        memastikanDetails: [],
         mengupayakanCount: 0,
       };
 
@@ -737,6 +766,12 @@ const RekapDashboard = ({
             }
 
             if (isMemastikan && item.iwkbu_ti_nopol) {
+              memastikanDetails.push({
+                nopol: item.iwkbu_ti_nopol,
+                tgl_transaksi: item.iwkbu_ti_tgl_transaksi,
+                rupiah: item.iwkbu_ti_rupiah_penerimaan || 0,
+                loket: loket.childLoket,
+              });
               if (!matchedNopol.has(item.iwkbu_ti_nopol)) {
                 matchedNopol.add(item.iwkbu_ti_nopol);
                 matchedRupiah += item.iwkbu_ti_rupiah_penerimaan || 0;
@@ -838,6 +873,7 @@ const RekapDashboard = ({
         rekap.checkoutRupiah -
         (rekap.memastikanRupiah + rekap.menambahkanRupiah);
       rekap.gapDetails = gapDetails;
+      rekap.memastikanDetails = memastikanDetails;
 
       // Handle parent loket and subtotals
       if (loket.parentLoket) {
@@ -876,6 +912,7 @@ const RekapDashboard = ({
           sisaNopol: 0,
           sisaRupiah: 0,
           gapDetails: [],
+          memastikanDetails: [],
           mengupayakanCount: 0,
         });
 
@@ -897,6 +934,7 @@ const RekapDashboard = ({
           sisaNopol: 0,
           sisaRupiah: 0,
           gapDetails: [],
+          memastikanDetails: [],
           mengupayakanCount: 0,
         };
       }
@@ -993,6 +1031,7 @@ const RekapDashboard = ({
       sisaNopol: subTotalRows.reduce((sum, row) => sum + row.sisaNopol, 0),
       sisaRupiah: subTotalRows.reduce((sum, row) => sum + row.sisaRupiah, 0),
       gapDetails: [],
+      memastikanDetails: [],
       mengupayakanCount: 0,
     };
 
@@ -1021,8 +1060,9 @@ const RekapDashboard = ({
     }
   }, [data, month]);
 
-  const handleDetail = (row: RekapRow) => {
+  const handleDetail = (row: RekapRow, type: "gap" | "memastikan") => {
     setSelectedRow(row);
+    setDetailType(type);
   };
 
   if (loading) {
@@ -1286,7 +1326,18 @@ const RekapDashboard = ({
                       ? formatRupiah(row.checkoutRupiah)
                       : "-"}
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell
+                    className={`text-center ${
+                      row.memastikanNopol > 0
+                        ? "cursor-pointer hover:underline font-medium text-blue-400"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      if (row.memastikanNopol > 0) {
+                        handleDetail(row, "memastikan");
+                      }
+                    }}
+                  >
                     {row.memastikanNopol > 0 ? row.memastikanNopol : "-"}
                   </TableCell>
                   <TableCell className="text-right">
@@ -1302,7 +1353,7 @@ const RekapDashboard = ({
                   <TableCell
                     className={`text-center ${
                       (!isGroupHeader && row.gapNopol !== 0) || isSubTotal
-                        ? " cursor-pointer hover:underline font-medium "
+                        ? " cursor-pointer hover:underline font-medium text-blue-400"
                         : ""
                     }`}
                     onClick={() => {
@@ -1310,7 +1361,7 @@ const RekapDashboard = ({
                         (!isGroupHeader && row.gapNopol !== 0) ||
                         isSubTotal
                       ) {
-                        handleDetail(row);
+                        handleDetail(row, "gap");
                       }
                     }}
                   >
@@ -1347,7 +1398,9 @@ const RekapDashboard = ({
             <div className="flex justify-between items-start p-5 border-b">
               <div>
                 <h3 className="text-xl font-bold text-gray-800">
-                  Detail GAP Nopol - {selectedRow.loketKantor}
+                  {detailType === "gap"
+                    ? `Detail GAP Nopol - ${selectedRow.loketKantor}`
+                    : `Detail Memastikan Nopol - ${selectedRow.loketKantor}`}
                   {selectedRow.loketKantor === "SUB TOTAL" &&
                     " (Breakdown per Loket)"}
                 </h3>
@@ -1357,7 +1410,9 @@ const RekapDashboard = ({
               </div>
               <div className="flex gap-2 items-center">
                 <Button
-                  onClick={() => exportGapDetailsToExcel(selectedRow)}
+                  onClick={() =>
+                    exportGapDetailsToExcel(selectedRow, detailType)
+                  }
                   className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-4 py-2 text-sm rounded-md shadow"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
@@ -1368,37 +1423,328 @@ const RekapDashboard = ({
 
             {/* Stats Summary */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-5 bg-gray-50 border-b">
-              <div className="bg-white p-3 rounded-md shadow-sm">
-                <p className="text-sm text-gray-600">CheckIn</p>
-                <p className="text-lg font-semibold">
-                  {selectedRow.checkinNopol} nopol
-                </p>
-              </div>
-              <div className="bg-white p-3 rounded-md shadow-sm">
-                <p className="text-sm text-gray-600">Memastikan</p>
-                <p className="text-lg font-semibold">
-                  {selectedRow.memastikanNopol} nopol
-                </p>
-              </div>
-              <div className="bg-white p-3 rounded-md shadow-sm">
-                <p className="text-sm text-gray-600">Total GAP</p>
-                <p className="text-lg font-semibold">
-                  {selectedRow.gapNopol} nopol
-                </p>
-              </div>
+              {detailType === "gap" ? (
+                <>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <p className="text-sm text-gray-600">CheckIn</p>
+                    <p className="text-lg font-semibold">
+                      {selectedRow.checkinNopol} nopol
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <p className="text-sm text-gray-600">Memastikan</p>
+                    <p className="text-lg font-semibold">
+                      {selectedRow.memastikanNopol} nopol
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <p className="text-sm text-gray-600">Total GAP</p>
+                    <p className="text-lg font-semibold">
+                      {selectedRow.gapNopol} nopol
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <p className="text-sm text-gray-600">CheckIn</p>
+                    <p className="text-lg font-semibold">
+                      {selectedRow.checkinNopol} nopol
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <p className="text-sm text-gray-600">CheckOut</p>
+                    <p className="text-lg font-semibold">
+                      {selectedRow.checkoutNopol} nopol
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <p className="text-sm text-gray-600">Total Memastikan</p>
+                    <p className="text-lg font-semibold">
+                      {selectedRow.memastikanNopol} nopol
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Table Container */}
             <div className="flex-1 overflow-auto">
-              {selectedRow.loketKantor === "SUB TOTAL" ? (
-                /* Special view for SUB TOTAL rows */
+              {detailType === "gap" ? (
+                selectedRow.loketKantor === "SUB TOTAL" ? (
+                  /* Special view for SUB TOTAL rows */
+                  <Table className="min-w-full">
+                    <TableHeader className="bg-gray-100 sticky top-0">
+                      <TableRow>
+                        <TableHead className="min-w-[200px]">Loket</TableHead>
+                        <TableHead className="min-w-[200px]">
+                          Keterangan
+                        </TableHead>
+                        <TableHead className="text-center">
+                          Jumlah Nopol
+                        </TableHead>
+                        <TableHead className="text-right">
+                          Total Nilai
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(() => {
+                        // Group gap details by loket and then by keterangan
+                        const groupedByLoket = selectedRow.gapDetails.reduce(
+                          (groups, item) => {
+                            const loket = item.loket || "Unknown";
+                            const keterangan = item.keterangan || "-";
+
+                            if (!groups[loket]) {
+                              groups[loket] = {};
+                            }
+
+                            if (!groups[loket][keterangan]) {
+                              groups[loket][keterangan] = {
+                                count: 0,
+                                total: 0,
+                              };
+                            }
+
+                            groups[loket][keterangan].count++;
+                            groups[loket][keterangan].total += item.rupiah;
+                            return groups;
+                          },
+                          {} as Record<
+                            string,
+                            Record<string, { count: number; total: number }>
+                          >
+                        );
+
+                        // If no data
+                        if (Object.keys(groupedByLoket).length === 0) {
+                          return (
+                            <TableRow>
+                              <TableCell
+                                colSpan={4}
+                                className="py-8 text-center text-gray-500"
+                              >
+                                Tidak ada data detail GAP
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }
+
+                        // Render grouped data
+                        return Object.entries(groupedByLoket).flatMap(
+                          ([loket, keteranganGroups], loketIndex) => {
+                            const loketTotal = Object.values(
+                              keteranganGroups
+                            ).reduce((sum, { total }) => sum + total, 0);
+                            const loketCount = Object.values(
+                              keteranganGroups
+                            ).reduce((sum, { count }) => sum + count, 0);
+
+                            return [
+                              // Loket header row
+                              <TableRow
+                                key={`loket-${loketIndex}`}
+                                className="bg-gray-50 font-medium"
+                              >
+                                <TableCell className="font-semibold">
+                                  {loket}
+                                </TableCell>
+                                <TableCell
+                                  colSpan={3}
+                                  className="font-semibold"
+                                >
+                                  Total: {loketCount} Nopol (
+                                  {formatRupiah(loketTotal)})
+                                </TableCell>
+                              </TableRow>,
+                              // Keterangan rows
+                              ...Object.entries(keteranganGroups).map(
+                                (
+                                  [keterangan, { count, total }],
+                                  keteranganIndex
+                                ) => (
+                                  <TableRow
+                                    key={`keterangan-${loketIndex}-${keteranganIndex}`}
+                                  >
+                                    <TableCell></TableCell>
+                                    <TableCell>{keterangan}</TableCell>
+                                    <TableCell className="text-center">
+                                      {count} Nopol
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      {formatRupiah(total)}
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              ),
+                            ];
+                          }
+                        );
+                      })()}
+                    </TableBody>
+                    {selectedRow.gapDetails.length > 0 && (
+                      <TableFooter className="bg-gray-100 sticky bottom-0">
+                        <TableRow className="font-bold">
+                          <TableCell>Grand Total</TableCell>
+                          <TableCell></TableCell>
+                          <TableCell className="text-center">
+                            {selectedRow.gapDetails.length} Nopol
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatRupiah(
+                              selectedRow.gapDetails.reduce(
+                                (sum, item) => sum + item.rupiah,
+                                0
+                              )
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      </TableFooter>
+                    )}
+                  </Table>
+                ) : (
+                  /* Regular view for non-SUB TOTAL rows */
+                  <Table className="min-w-full">
+                    <TableHeader className="bg-gray-100 sticky top-0">
+                      <TableRow>
+                        <TableHead className="w-[60px] text-center">
+                          No
+                        </TableHead>
+                        <TableHead className="min-w-[120px] text-center">
+                          No. Polisi
+                        </TableHead>
+                        <TableHead className="min-w-[150px] text-center">
+                          Keterangan
+                        </TableHead>
+                        <TableHead className="min-w-[120px] text-right">
+                          Nilai
+                        </TableHead>
+                        <TableHead className="min-w-[120px] text-right">
+                          Tanggal
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(() => {
+                        // Group gap details by keterangan
+                        const groupedDetails = selectedRow.gapDetails.reduce(
+                          (groups, item) => {
+                            const key = item.keterangan || "-";
+                            if (!groups[key]) {
+                              groups[key] = [];
+                            }
+                            groups[key].push(item);
+                            return groups;
+                          },
+                          {} as Record<string, GapDetail[]>
+                        );
+
+                        // If no data
+                        if (Object.keys(groupedDetails).length === 0) {
+                          return (
+                            <TableRow>
+                              <TableCell
+                                colSpan={5}
+                                className="py-8 text-center text-gray-500"
+                              >
+                                Tidak ada data detail GAP
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }
+
+                        // Render grouped data
+                        let rowIndex = 0;
+                        return Object.entries(groupedDetails).flatMap(
+                          ([keterangan, items], groupIndex) => {
+                            const subtotal = items.reduce(
+                              (sum, item) => sum + item.rupiah,
+                              0
+                            );
+
+                            return [
+                              // Group header row
+                              <TableRow
+                                key={`header-${groupIndex}`}
+                                className="bg-gray-50"
+                              >
+                                <TableCell
+                                  colSpan={5}
+                                  className="font-semibold text-gray-800"
+                                >
+                                  {keterangan} ({items.length} Nopol)
+                                </TableCell>
+                              </TableRow>,
+                              // Item rows
+                              ...items.map((item, itemIndex) => {
+                                rowIndex++;
+                                return (
+                                  <TableRow
+                                    key={`item-${groupIndex}-${itemIndex}`}
+                                  >
+                                    <TableCell className="py-2 font-medium text-center">
+                                      {rowIndex}
+                                    </TableCell>
+                                    <TableCell className="py-2 font-mono text-center">
+                                      {item.nopol}
+                                    </TableCell>
+                                    <TableCell className="py-2 text-center">
+                                      {item.keterangan}
+                                    </TableCell>
+                                    <TableCell className="py-2 text-right">
+                                      {formatRupiah(item.rupiah)}
+                                    </TableCell>
+                                    <TableCell className="py-2 text-right">
+                                      {item.tgl_transaksi}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              }),
+                              // Subtotal row
+                              <TableRow
+                                key={`subtotal-${groupIndex}`}
+                                className="bg-blue-50 font-medium"
+                              >
+                                <TableCell colSpan={3} className="text-right">
+                                  Subtotal {keterangan}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatRupiah(subtotal)}
+                                </TableCell>
+                                <TableCell></TableCell>
+                              </TableRow>,
+                            ];
+                          }
+                        );
+                      })()}
+                    </TableBody>
+                    {/* Grand total row */}
+                    {selectedRow.gapDetails.length > 0 && (
+                      <TableFooter className="bg-gray-100 sticky bottom-0">
+                        <TableRow className="font-bold">
+                          <TableCell colSpan={3} className="text-right">
+                            Grand Total
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatRupiah(
+                              selectedRow.gapDetails.reduce(
+                                (sum, item) => sum + item.rupiah,
+                                0
+                              )
+                            )}
+                          </TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>
+                      </TableFooter>
+                    )}
+                  </Table>
+                )
+              ) : selectedRow.loketKantor === "SUB TOTAL" ? (
                 <Table className="min-w-full">
                   <TableHeader className="bg-gray-100 sticky top-0">
                     <TableRow>
                       <TableHead className="min-w-[200px]">Loket</TableHead>
-                      <TableHead className="min-w-[200px]">
-                        Keterangan
-                      </TableHead>
                       <TableHead className="text-center">
                         Jumlah Nopol
                       </TableHead>
@@ -1407,118 +1753,36 @@ const RekapDashboard = ({
                   </TableHeader>
                   <TableBody>
                     {(() => {
-                      // Group gap details by loket and then by keterangan
-                      const groupedByLoket = selectedRow.gapDetails.reduce(
-                        (groups, item) => {
+                      const groupedByLoket =
+                        selectedRow.memastikanDetails.reduce((groups, item) => {
                           const loket = item.loket || "Unknown";
-                          const keterangan = item.keterangan || "-";
-
                           if (!groups[loket]) {
-                            groups[loket] = {};
+                            groups[loket] = { count: 0, total: 0 };
                           }
-
-                          if (!groups[loket][keterangan]) {
-                            groups[loket][keterangan] = {
-                              count: 0,
-                              total: 0,
-                            };
-                          }
-
-                          groups[loket][keterangan].count++;
-                          groups[loket][keterangan].total += item.rupiah;
+                          groups[loket].count++;
+                          groups[loket].total += item.rupiah;
                           return groups;
-                        },
-                        {} as Record<
-                          string,
-                          Record<string, { count: number; total: number }>
-                        >
-                      );
+                        }, {} as Record<string, { count: number; total: number }>);
 
-                      // If no data
-                      if (Object.keys(groupedByLoket).length === 0) {
-                        return (
-                          <TableRow>
-                            <TableCell
-                              colSpan={4}
-                              className="py-8 text-center text-gray-500"
-                            >
-                              Tidak ada data detail GAP
+                      return Object.entries(groupedByLoket).map(
+                        ([loket, { count, total }], index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-semibold">
+                              {loket}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {count} Nopol
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {formatRupiah(total)}
                             </TableCell>
                           </TableRow>
-                        );
-                      }
-
-                      // Render grouped data
-                      return Object.entries(groupedByLoket).flatMap(
-                        ([loket, keteranganGroups], loketIndex) => {
-                          const loketTotal = Object.values(
-                            keteranganGroups
-                          ).reduce((sum, { total }) => sum + total, 0);
-                          const loketCount = Object.values(
-                            keteranganGroups
-                          ).reduce((sum, { count }) => sum + count, 0);
-
-                          return [
-                            // Loket header row
-                            <TableRow
-                              key={`loket-${loketIndex}`}
-                              className="bg-gray-50 font-medium"
-                            >
-                              <TableCell className="font-semibold">
-                                {loket}
-                              </TableCell>
-                              <TableCell colSpan={3} className="font-semibold">
-                                Total: {loketCount} Nopol (
-                                {formatRupiah(loketTotal)})
-                              </TableCell>
-                            </TableRow>,
-                            // Keterangan rows
-                            ...Object.entries(keteranganGroups).map(
-                              (
-                                [keterangan, { count, total }],
-                                keteranganIndex
-                              ) => (
-                                <TableRow
-                                  key={`keterangan-${loketIndex}-${keteranganIndex}`}
-                                >
-                                  <TableCell></TableCell>
-                                  <TableCell>{keterangan}</TableCell>
-                                  <TableCell className="text-center">
-                                    {count} Nopol
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    {formatRupiah(total)}
-                                  </TableCell>
-                                </TableRow>
-                              )
-                            ),
-                          ];
-                        }
+                        )
                       );
                     })()}
                   </TableBody>
-                  {selectedRow.gapDetails.length > 0 && (
-                    <TableFooter className="bg-gray-100 sticky bottom-0">
-                      <TableRow className="font-bold">
-                        <TableCell>Grand Total</TableCell>
-                        <TableCell></TableCell>
-                        <TableCell className="text-center">
-                          {selectedRow.gapDetails.length} Nopol
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatRupiah(
-                            selectedRow.gapDetails.reduce(
-                              (sum, item) => sum + item.rupiah,
-                              0
-                            )
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    </TableFooter>
-                  )}
                 </Table>
               ) : (
-                /* Regular view for non-SUB TOTAL rows */
                 <Table className="min-w-full">
                   <TableHeader className="bg-gray-100 sticky top-0">
                     <TableRow>
@@ -1526,130 +1790,32 @@ const RekapDashboard = ({
                       <TableHead className="min-w-[120px] text-center">
                         No. Polisi
                       </TableHead>
-                      <TableHead className="min-w-[150px] text-center">
-                        Keterangan
+                      <TableHead className="min-w-[120px] text-right">
+                        Tanggal
                       </TableHead>
                       <TableHead className="min-w-[120px] text-right">
                         Nilai
                       </TableHead>
-                      <TableHead className="min-w-[120px] text-right">
-                        Tanggal
-                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(() => {
-                      // Group gap details by keterangan
-                      const groupedDetails = selectedRow.gapDetails.reduce(
-                        (groups, item) => {
-                          const key = item.keterangan || "-";
-                          if (!groups[key]) {
-                            groups[key] = [];
-                          }
-                          groups[key].push(item);
-                          return groups;
-                        },
-                        {} as Record<string, GapDetail[]>
-                      );
-
-                      // If no data
-                      if (Object.keys(groupedDetails).length === 0) {
-                        return (
-                          <TableRow>
-                            <TableCell
-                              colSpan={5}
-                              className="py-8 text-center text-gray-500"
-                            >
-                              Tidak ada data detail GAP
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-
-                      // Render grouped data
-                      let rowIndex = 0;
-                      return Object.entries(groupedDetails).flatMap(
-                        ([keterangan, items], groupIndex) => {
-                          const subtotal = items.reduce(
-                            (sum, item) => sum + item.rupiah,
-                            0
-                          );
-
-                          return [
-                            // Group header row
-                            <TableRow
-                              key={`header-${groupIndex}`}
-                              className="bg-gray-50"
-                            >
-                              <TableCell
-                                colSpan={5}
-                                className="font-semibold text-gray-800"
-                              >
-                                {keterangan} ({items.length} Nopol)
-                              </TableCell>
-                            </TableRow>,
-                            // Item rows
-                            ...items.map((item, itemIndex) => {
-                              rowIndex++;
-                              return (
-                                <TableRow
-                                  key={`item-${groupIndex}-${itemIndex}`}
-                                >
-                                  <TableCell className="py-2 font-medium text-center">
-                                    {rowIndex}
-                                  </TableCell>
-                                  <TableCell className="py-2 font-mono text-center">
-                                    {item.nopol}
-                                  </TableCell>
-                                  <TableCell className="py-2 text-center">
-                                    {item.keterangan}
-                                  </TableCell>
-                                  <TableCell className="py-2 text-right">
-                                    {formatRupiah(item.rupiah)}
-                                  </TableCell>
-                                  <TableCell className="py-2 text-right">
-                                    {item.tgl_transaksi}
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            }),
-                            // Subtotal row
-                            <TableRow
-                              key={`subtotal-${groupIndex}`}
-                              className="bg-blue-50 font-medium"
-                            >
-                              <TableCell colSpan={3} className="text-right">
-                                Subtotal {keterangan}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatRupiah(subtotal)}
-                              </TableCell>
-                              <TableCell></TableCell>
-                            </TableRow>,
-                          ];
-                        }
-                      );
-                    })()}
-                  </TableBody>
-                  {/* Grand total row */}
-                  {selectedRow.gapDetails.length > 0 && (
-                    <TableFooter className="bg-gray-100 sticky bottom-0">
-                      <TableRow className="font-bold">
-                        <TableCell colSpan={3} className="text-right">
-                          Grand Total
+                    {selectedRow.memastikanDetails.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="py-2 font-medium text-center">
+                          {index + 1}
                         </TableCell>
-                        <TableCell className="text-right">
-                          {formatRupiah(
-                            selectedRow.gapDetails.reduce(
-                              (sum, item) => sum + item.rupiah,
-                              0
-                            )
-                          )}
+                        <TableCell className="py-2 font-mono text-center">
+                          {item.nopol}
                         </TableCell>
-                        <TableCell></TableCell>
+                        <TableCell className="py-2 text-right">
+                          {item.tgl_transaksi}
+                        </TableCell>
+                        <TableCell className="py-2 text-right">
+                          {formatRupiah(item.rupiah)}
+                        </TableCell>
                       </TableRow>
-                    </TableFooter>
-                  )}
+                    ))}
+                  </TableBody>
                 </Table>
               )}
             </div>
