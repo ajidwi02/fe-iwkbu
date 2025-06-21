@@ -1,9 +1,6 @@
 "use client";
 
-import RekapDashboard, { DateRangeProps } from "@/components/RekapDashboard";
 import { useEffect, useState } from "react";
-import MenambahkanData from "./menambahkan-data";
-import MengupayakanData from "./mengupayakan-data";
 import MemastikanData from "./memastikan-data";
 
 const DataQuadranDashboard = () => {

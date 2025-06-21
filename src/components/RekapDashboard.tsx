@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Plus, Minus, FileSpreadsheet, CornerDownRight } from "lucide-react";
+import { group } from "console";
 
 export interface DateRangeProps {
   startDate: Date | null;
@@ -660,6 +661,25 @@ const RekapDashboard = ({
       return date >= startDate && date <= endDate;
     };
 
+    const finalizeAndPushSubTotal = (subTotal: RekapRow) => {
+      // Kalkulasi persentase berdasarkan Nopol unik untuk akurasi
+      const uniqueMemastikanNopol = new Set(
+        subTotal.memastikanDetails.map((d) => d.nopol)
+      );
+      subTotal.memastikanPersen =
+        subTotal.checkoutNopol > 0
+          ? uniqueMemastikanNopol.size / subTotal.checkoutNopol
+          : 0;
+
+      // Kalkulasi rata-rata Mengupayakan
+      subTotal.mengupayakan =
+        subTotal.mengupayakanCount > 0
+          ? Math.round(subTotal.mengupayakan / subTotal.mengupayakanCount)
+          : 0;
+
+      result.push(subTotal);
+    };
+
     loketMapping.forEach((loket) => {
       const endpointData =
         data.find((d) => d.endpoint === loket.endpoint)?.data || [];
@@ -844,12 +864,12 @@ const RekapDashboard = ({
                 loket: loket.childLoket,
               });
 
-              if (groupSubTotal) {
-                groupSubTotal.gapDetails.push({
-                  ...gapDetails[gapDetails.length - 1],
-                  loket: loket.childLoket,
-                });
-              }
+              // if (groupSubTotal) {
+              //   groupSubTotal.gapDetails.push({
+              //     ...gapDetails[gapDetails.length - 1],
+              //     loket: loket.childLoket,
+              //   });
+              // }
             }
           }
         }
@@ -871,7 +891,7 @@ const RekapDashboard = ({
       //   rekap.checkoutNopol > 0 ? matchedNopol.size / rekap.checkoutNopol : 0;
       rekap.menambahkanNopol = menambahkanNopol;
       rekap.menambahkanRupiah = menambahkanRupiah;
-      rekap.gapNopol = rekap.checkinNopol - rekap.memastikanNopol;
+      rekap.gapNopol = gapDetails.length;
       rekap.mengupayakan =
         countNopolBulanMajuTI > 0
           ? Math.round(totalBulanMajuTI / rekap.checkoutNopol)
@@ -888,19 +908,7 @@ const RekapDashboard = ({
       // Handle parent loket and subtotals
       if (loket.parentLoket) {
         if (groupSubTotal) {
-          groupSubTotal.memastikanPersen =
-            groupSubTotal.checkoutNopol > 0
-              ? groupSubTotal.memastikanNopol / groupSubTotal.checkoutNopol
-              : 0;
-
-          // Calculate average mengupayakan for subtotal
-          groupSubTotal.mengupayakan =
-            groupSubTotal.mengupayakanCount > 0
-              ? Math.round(
-                  groupSubTotal.mengupayakan / groupSubTotal.mengupayakanCount
-                )
-              : 0;
-          result.push(groupSubTotal);
+          finalizeAndPushSubTotal(groupSubTotal);
           groupSubTotal = null;
         }
 
@@ -968,25 +976,35 @@ const RekapDashboard = ({
         groupSubTotal.gapNopol += rekap.gapNopol;
         groupSubTotal.sisaNopol += rekap.sisaNopol;
         groupSubTotal.sisaRupiah += rekap.sisaRupiah;
+
+        groupSubTotal.gapDetails = groupSubTotal.gapDetails.concat(
+          rekap.gapDetails
+        );
+        groupSubTotal.memastikanDetails =
+          groupSubTotal.memastikanDetails.concat(rekap.memastikanDetails);
       }
     });
 
     if (groupSubTotal) {
-      groupSubTotal.memastikanPersen =
-        groupSubTotal.checkoutNopol > 0
-          ? groupSubTotal.memastikanNopol / groupSubTotal.checkoutNopol
-          : 0;
-
-      // Calculate average mengupayakan for subtotal
-      groupSubTotal.mengupayakan =
-        groupSubTotal.mengupayakanCount > 0
-          ? Math.round(
-              groupSubTotal.mengupayakan / groupSubTotal.mengupayakanCount
-            )
-          : 0;
-
-      result.push(groupSubTotal);
+      finalizeAndPushSubTotal(groupSubTotal);
     }
+
+    // if (groupSubTotal) {
+    //   groupSubTotal.memastikanPersen =
+    //     groupSubTotal.checkoutNopol > 0
+    //       ? groupSubTotal.memastikanNopol / groupSubTotal.checkoutNopol
+    //       : 0;
+
+    //   // Calculate average mengupayakan for subtotal
+    //   groupSubTotal.mengupayakan =
+    //     groupSubTotal.mengupayakanCount > 0
+    //       ? Math.round(
+    //           groupSubTotal.mengupayakan / groupSubTotal.mengupayakanCount
+    //         )
+    //       : 0;
+
+    //   result.push(groupSubTotal);
+    // }
 
     const subTotalRows = result.filter(
       (row) => row.loketKantor === "SUB TOTAL"
