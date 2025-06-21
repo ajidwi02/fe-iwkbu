@@ -13,6 +13,12 @@ import {
   ChartArea,
   PieChart,
   PieChartIcon,
+  CurrencyIcon,
+  DollarSign,
+  FilePlus,
+  GitGraph,
+  LineChart,
+  LineChartIcon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,6 +58,11 @@ const items = [
     title: "Tabel Data Quadran",
     url: "/data-quadran",
     icon: PieChartIcon,
+  },
+  {
+    title: "Tabel Data Anggaran",
+    url: "/data-anggaran",
+    icon: LineChartIcon,
   },
 ];
 

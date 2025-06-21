@@ -1191,25 +1191,25 @@ const MemastikanData = ({
                 {[
                   {
                     key: "q1",
-                    label: "Sangat Baik (61-100%)",
+                    label: "QUADRAN I (61-100%)",
                     data: quadrantData.memastikan.q1,
                     color: "bg-green-100 border-green-500",
                   },
                   {
                     key: "q2",
-                    label: "Baik (41-60%)",
+                    label: "QUADRAN II (41-60%)",
                     data: quadrantData.memastikan.q2,
                     color: "bg-yellow-100 border-yellow-500",
                   },
                   {
                     key: "q3",
-                    label: "Cukup (21-40%)",
+                    label: "QUADRAN III (21-40%)",
                     data: quadrantData.memastikan.q3,
                     color: "bg-orange-100 border-orange-500",
                   },
                   {
                     key: "q4",
-                    label: "Kurang (0-20%)",
+                    label: "QUADRAN IV (0-20%)",
                     data: quadrantData.memastikan.q4,
                     color: "bg-red-100 border-red-500",
                   },
@@ -1259,25 +1259,25 @@ const MemastikanData = ({
                 {[
                   {
                     key: "q1",
-                    label: "Sangat Baik (9+ bln)",
+                    label: "QUADRAN I (9+ bln)",
                     data: quadrantData.mengupayakan.q1,
                     color: "bg-green-100 border-green-500",
                   },
                   {
                     key: "q2",
-                    label: "Baik (6-8 bln)",
+                    label: "QUADRAN II (6-8 bln)",
                     data: quadrantData.mengupayakan.q2,
                     color: "bg-yellow-100 border-yellow-500",
                   },
                   {
                     key: "q3",
-                    label: "Cukup (3-5 bln)",
+                    label: "QUADRAN III (3-5 bln)",
                     data: quadrantData.mengupayakan.q3,
                     color: "bg-orange-100 border-orange-500",
                   },
                   {
                     key: "q4",
-                    label: "Kurang (0-2 bln)",
+                    label: "QUADRAN IV (0-2 bln)",
                     data: quadrantData.mengupayakan.q4,
                     color: "bg-red-100 border-red-500",
                   },
@@ -1327,25 +1327,25 @@ const MemastikanData = ({
                 {[
                   {
                     key: "q1",
-                    label: "Sangat Baik (15+ Nopol)",
+                    label: "QUADRAN I (15+ Nopol)",
                     data: quadrantData.menambahkan.q1,
                     color: "bg-green-100 border-green-500",
                   },
                   {
                     key: "q2",
-                    label: "Baik (11-14 Nopol)",
+                    label: "QUADRAN II (11-14 Nopol)",
                     data: quadrantData.menambahkan.q2,
                     color: "bg-yellow-100 border-yellow-500",
                   },
                   {
                     key: "q3",
-                    label: "Cukup (6-10 Nopol)",
+                    label: "QUADRAN III (6-10 Nopol)",
                     data: quadrantData.menambahkan.q3,
                     color: "bg-orange-100 border-orange-500",
                   },
                   {
                     key: "q4",
-                    label: "Kurang (0-5 Nopol)",
+                    label: "QUADRAN IV (0-5 Nopol)",
                     data: quadrantData.menambahkan.q4,
                     color: "bg-red-100 border-red-500",
                   },

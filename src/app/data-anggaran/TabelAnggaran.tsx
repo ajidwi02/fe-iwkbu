@@ -13,8 +13,6 @@ import {
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-import { Button } from "./ui/button";
-
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -25,6 +23,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Plus, Minus, FileSpreadsheet, CornerDownRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export interface DateRangeProps {
   startDate: Date | null;
@@ -489,7 +488,7 @@ const loketMapping = [
   },
 ];
 
-const RekapDashboard = ({
+const TabelAnggaran = ({
   onDateRangeChange,
   initialStartDate,
   initialEndDate,
@@ -772,10 +771,10 @@ const RekapDashboard = ({
                 rupiah: item.iwkbu_ti_rupiah_penerimaan || 0,
                 loket: loket.childLoket,
               });
-              // if (!matchedNopol.has(item.iwkbu_ti_nopol)) {
-              //   matchedNopol.add(item.iwkbu_ti_nopol);
-              //   matchedRupiah += item.iwkbu_ti_rupiah_penerimaan || 0;
-              // }
+              if (!matchedNopol.has(item.iwkbu_ti_nopol)) {
+                matchedNopol.add(item.iwkbu_ti_nopol);
+                matchedRupiah += item.iwkbu_ti_rupiah_penerimaan || 0;
+              }
             }
             const processedNopols = new Set<string>();
             endpointData.forEach((ciItem) => {
@@ -855,20 +854,10 @@ const RekapDashboard = ({
         }
       });
 
-      rekap.memastikanNopol = memastikanDetails.length;
-      rekap.memastikanRupiah = memastikanDetails.reduce(
-        (sum, detail) => sum + detail.rupiah,
-        0
-      );
-      const uniqueMemastikanNopol = new Set(
-        memastikanDetails.map((d) => d.nopol)
-      );
+      rekap.memastikanNopol = matchedNopol.size;
+      rekap.memastikanRupiah = matchedRupiah;
       rekap.memastikanPersen =
-        rekap.checkoutNopol > 0
-          ? uniqueMemastikanNopol.size / rekap.checkoutNopol
-          : 0;
-      // rekap.memastikanPersen =
-      //   rekap.checkoutNopol > 0 ? matchedNopol.size / rekap.checkoutNopol : 0;
+        rekap.checkoutNopol > 0 ? matchedNopol.size / rekap.checkoutNopol : 0;
       rekap.menambahkanNopol = menambahkanNopol;
       rekap.menambahkanRupiah = menambahkanRupiah;
       rekap.gapNopol = rekap.checkinNopol - rekap.memastikanNopol;
@@ -1184,34 +1173,34 @@ const RekapDashboard = ({
 
       <div className="overflow-auto rounded-lg border shadow-md">
         <Table>
-          <TableHeader className="bg-gray-100">
+          <TableHeader className="bg-gray-900">
             <TableRow>
-              <TableHead className="text-gray-800 w-[50px] text-center">
+              <TableHead className="text-white w-[50px] text-center">
                 NO
               </TableHead>
-              <TableHead className="text-gray-800 min-w-[220px]">
+              <TableHead className="text-white min-w-[220px]">
                 LOKET KANTOR
               </TableHead>
-              <TableHead className="text-gray-800 min-w-[160px]">
+              <TableHead className="text-white min-w-[160px]">
                 PETUGAS
               </TableHead>
-              <TableHead colSpan={2} className="text-gray-800 text-center">
+              <TableHead colSpan={2} className="text-white text-center">
                 CHECK-IN
               </TableHead>
-              <TableHead colSpan={2} className="text-gray-800 text-center">
+              <TableHead colSpan={2} className="text-white text-center">
                 CHECK-OUT
               </TableHead>
-              <TableHead colSpan={3} className="text-gray-800 text-center">
+              <TableHead colSpan={3} className="text-white text-center">
                 MEMASTIKAN
               </TableHead>
-              <TableHead className="text-gray-800 text-center">GAP</TableHead>
-              <TableHead className="text-gray-800 text-center">
+              <TableHead className="text-white text-center">GAP</TableHead>
+              <TableHead className="text-white text-center">
                 MENGUPAYAKAN
               </TableHead>
-              <TableHead colSpan={2} className="text-gray-800 text-center">
+              <TableHead colSpan={2} className="text-white text-center">
                 MENAMBAHKAN
               </TableHead>
-              <TableHead colSpan={2} className="text-gray-800 text-center">
+              <TableHead colSpan={2} className="text-white text-center">
                 PENERIMAAN LEBIH
               </TableHead>
             </TableRow>
@@ -1219,33 +1208,23 @@ const RekapDashboard = ({
               <TableHead></TableHead>
               <TableHead></TableHead>
               <TableHead></TableHead>
-              <TableHead className="text-gray-800 text-center">NOPOL</TableHead>
-              <TableHead className="text-gray-800 text-center">
-                RUPIAH
-              </TableHead>
-              <TableHead className="text-gray-800 text-center">NOPOL</TableHead>
-              <TableHead className="text-gray-800 text-center">
-                RUPIAH
-              </TableHead>
-              <TableHead className="text-gray-800 text-center">NOPOL</TableHead>
-              <TableHead className="text-gray-800 text-center">
-                RUPIAH
-              </TableHead>
-              <TableHead className="text-gray-800 text-center">%</TableHead>
-              <TableHead className="text-gray-800 text-center">NOPOL</TableHead>
-              <TableHead className="text-gray-800 text-center">
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">RUPIAH</TableHead>
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">RUPIAH</TableHead>
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">RUPIAH</TableHead>
+              <TableHead className="text-white text-center">%</TableHead>
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">
                 Rata-rata
                 <br />
                 Bulan Maju
               </TableHead>
-              <TableHead className="text-gray-800 text-center">NOPOL</TableHead>
-              <TableHead className="text-gray-800 text-center">
-                RUPIAH
-              </TableHead>
-              <TableHead className="text-gray-800 text-center">NOPOL</TableHead>
-              <TableHead className="text-gray-800 text-center">
-                RUPIAH
-              </TableHead>
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">RUPIAH</TableHead>
+              <TableHead className="text-white text-center">NOPOL</TableHead>
+              <TableHead className="text-white text-center">RUPIAH</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -1265,15 +1244,15 @@ const RekapDashboard = ({
                 return (
                   <TableRow
                     key={index}
-                    className="bg-gray-300 border-accent text-gray-700 font-medium cursor-pointer hover:bg-gray-300"
+                    className="bg-gray-800 text-white font-medium cursor-pointer hover:bg-gray-700"
                     onClick={() => toggleGroup(row.loketKantor)}
                   >
                     <TableCell colSpan={16} className="px-2">
                       <div className="flex items-center gap-3 hover:underline">
                         {expandedGroups[row.loketKantor] ? (
-                          <Minus className="w-4 h-4 text-gray-700" />
+                          <Minus className="w-4 h-4 text-gray-200" />
                         ) : (
-                          <Plus className="w-4 h-4 text-gray-700" />
+                          <Plus className="w-4 h-4 text-gray-200" />
                         )}
                         <span>{row.loketKantor}</span>
                       </div>
@@ -1306,9 +1285,9 @@ const RekapDashboard = ({
                   key={index}
                   className={
                     isGrandTotal
-                      ? "bg-gray-200 font-bold text-gray-700 hover:bg-gray-200"
+                      ? "bg-gray-900 font-bold text-white hover:bg-gray-900"
                       : isSubTotal
-                      ? "bg-gray-200 font-bold text-gray-700 hover:bg-gray-200"
+                      ? "bg-gray-900 font-bold text-white hover:bg-gray-900"
                       : ""
                   }
                 >
@@ -1322,7 +1301,7 @@ const RekapDashboard = ({
                   >
                     {isSubTotal ? (
                       <div className="flex items-center pl-2">
-                        <CornerDownRight className="w-4 h-4 mr-2 text-gray-800" />
+                        <CornerDownRight className="w-4 h-4 mr-2 text-gray-200" />
                         <span>{row.loketKantor}</span>
                       </div>
                     ) : (
@@ -1857,4 +1836,4 @@ const RekapDashboard = ({
   );
 };
 
-export default RekapDashboard;
+export default TabelAnggaran;
