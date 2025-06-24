@@ -86,6 +86,7 @@ interface RekapRow {
   gapDetails: GapDetail[];
   memastikanDetails: MemastikanDetail[];
   mengupayakanCount: number;
+  placeholderChar: "0" | "-";
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
@@ -706,6 +707,7 @@ const RekapDashboard = ({
         gapDetails: [],
         memastikanDetails: [],
         mengupayakanCount: 0,
+        placeholderChar: "-",
       };
 
       const matchedNopol = new Set<string>();
@@ -905,6 +907,26 @@ const RekapDashboard = ({
       rekap.gapDetails = gapDetails;
       rekap.memastikanDetails = memastikanDetails;
 
+      // Tentukan placeholder untuk nilai kosong berdasarkan data mentah
+      const isDataEffectivelyEmpty =
+        rekap.checkinNopol === 0 && rekap.checkoutNopol === 0;
+      if (isDataEffectivelyEmpty) {
+        const relevantDataForLoket = endpointData.filter((item) => {
+          const dateStr =
+            item.iwkbu_tl_tgl_transaksi || item.iwkbu_ti_tgl_transaksi;
+          if (!dateStr) return false;
+          return useDateRange && isDateInRange(dateStr, startDate, endDate);
+        });
+
+        if (
+          relevantDataForLoket.some(
+            (item) => item.tl_keterangan_konversi_iwkbu === "NIHIL"
+          )
+        ) {
+          rekap.placeholderChar = "0";
+        }
+      }
+
       // Handle parent loket and subtotals
       if (loket.parentLoket) {
         if (groupSubTotal) {
@@ -932,6 +954,7 @@ const RekapDashboard = ({
           gapDetails: [],
           memastikanDetails: [],
           mengupayakanCount: 0,
+          placeholderChar: "-",
         });
 
         groupSubTotal = {
@@ -954,6 +977,7 @@ const RekapDashboard = ({
           gapDetails: [],
           memastikanDetails: [],
           mengupayakanCount: 0,
+          placeholderChar: "-",
         };
       }
 
@@ -988,23 +1012,6 @@ const RekapDashboard = ({
     if (groupSubTotal) {
       finalizeAndPushSubTotal(groupSubTotal);
     }
-
-    // if (groupSubTotal) {
-    //   groupSubTotal.memastikanPersen =
-    //     groupSubTotal.checkoutNopol > 0
-    //       ? groupSubTotal.memastikanNopol / groupSubTotal.checkoutNopol
-    //       : 0;
-
-    //   // Calculate average mengupayakan for subtotal
-    //   groupSubTotal.mengupayakan =
-    //     groupSubTotal.mengupayakanCount > 0
-    //       ? Math.round(
-    //           groupSubTotal.mengupayakan / groupSubTotal.mengupayakanCount
-    //         )
-    //       : 0;
-
-    //   result.push(groupSubTotal);
-    // }
 
     const subTotalRows = result.filter(
       (row) => row.loketKantor === "SUB TOTAL"
@@ -1061,6 +1068,7 @@ const RekapDashboard = ({
       gapDetails: [],
       memastikanDetails: [],
       mengupayakanCount: 0,
+      placeholderChar: "-",
     };
 
     result.push(grandTotal);
@@ -1349,19 +1357,31 @@ const RekapDashboard = ({
                   </TableCell>
                   <TableCell>{row.petugas}</TableCell>
                   <TableCell className="text-center">
-                    {row.checkinNopol > 0 ? row.checkinNopol : "-"}
+                    {row.checkinNopol > 0
+                      ? row.checkinNopol
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-right">
                     {row.checkinRupiah > 0
                       ? formatRupiah(row.checkinRupiah)
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
                       : "-"}
                   </TableCell>
                   <TableCell className="text-center">
-                    {row.checkoutNopol > 0 ? row.checkoutNopol : "-"}
+                    {row.checkoutNopol > 0
+                      ? row.checkoutNopol
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-right">
                     {row.checkoutRupiah > 0
                       ? formatRupiah(row.checkoutRupiah)
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
                       : "-"}
                   </TableCell>
                   <TableCell
@@ -1376,7 +1396,11 @@ const RekapDashboard = ({
                       }
                     }}
                   >
-                    {row.memastikanNopol > 0 ? row.memastikanNopol : "-"}
+                    {row.memastikanNopol > 0
+                      ? row.memastikanNopol
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-right">
                     {row.memastikanRupiah > 0
@@ -1386,41 +1410,66 @@ const RekapDashboard = ({
                   <TableCell className="text-center">
                     {row.memastikanPersen > 0
                       ? formatPercentage(row.memastikanPersen)
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
                       : "-"}
                   </TableCell>
                   <TableCell
                     className={`text-center ${
-                      (!isGroupHeader && row.gapNopol !== 0) || isSubTotal
+                      row.gapNopol !== 0 && !isGroupHeader && !isGrandTotal
                         ? " cursor-pointer hover:underline font-medium text-blue-400"
                         : ""
                     }`}
                     onClick={() => {
                       if (
-                        (!isGroupHeader && row.gapNopol !== 0) ||
-                        isSubTotal
+                        row.gapNopol !== 0 &&
+                        !isGroupHeader &&
+                        !isGrandTotal
                       ) {
                         handleDetail(row, "gap");
                       }
                     }}
                   >
-                    {row.gapNopol !== 0 ? row.gapNopol : "-"}
+                    {row.gapNopol !== 0
+                      ? row.gapNopol
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-center">
-                    {row.mengupayakan !== 0 ? row.mengupayakan : "-"}
+                    {row.mengupayakan !== 0
+                      ? row.mengupayakan
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-center">
-                    {row.menambahkanNopol > 0 ? row.menambahkanNopol : "-"}
+                    {row.menambahkanNopol > 0
+                      ? row.menambahkanNopol
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-right">
                     {row.menambahkanRupiah > 0
                       ? formatRupiah(row.menambahkanRupiah)
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
                       : "-"}
                   </TableCell>
                   <TableCell className="text-center">
-                    {row.sisaNopol > 0 ? row.sisaNopol : "-"}
+                    {row.sisaNopol > 0
+                      ? row.sisaNopol
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-right">
-                    {row.sisaRupiah > 0 ? formatRupiah(row.sisaRupiah) : "-"}
+                    {row.sisaRupiah > 0
+                      ? formatRupiah(row.sisaRupiah)
+                      : isIndividualLoketRow
+                      ? row.placeholderChar
+                      : "-"}
                   </TableCell>
                 </TableRow>
               );

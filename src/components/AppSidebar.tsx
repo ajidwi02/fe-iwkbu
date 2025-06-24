@@ -45,24 +45,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 // Menu items.
 const items = [
   {
-    title: "Report",
+    title: "Report M3",
     url: "/",
     icon: FileBoxIcon,
   },
   {
-    title: "Data Loket Cabang",
-    url: "/detail-data-cabang",
-    icon: Building2Icon,
-  },
-  {
-    title: "Tabel Data Quadran",
+    title: "Data Quadran",
     url: "/data-quadran",
     icon: PieChartIcon,
   },
   {
-    title: "Tabel Data Anggaran",
-    url: "/data-anggaran",
-    icon: LineChartIcon,
+    title: "Data Detail Loket Cabang",
+    url: "/detail-data-cabang",
+    icon: Building2Icon,
   },
 ];
 
