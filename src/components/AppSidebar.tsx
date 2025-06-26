@@ -59,6 +59,11 @@ const items = [
     url: "/detail-data-cabang",
     icon: Building2Icon,
   },
+  {
+    title: "Data Capaian Anggaran",
+    url: "/data-anggaran",
+    icon: LineChartIcon,
+  },
 ];
 
 const AppSidebar = () => {
