@@ -55,14 +55,14 @@ const items = [
     icon: PieChartIcon,
   },
   {
-    title: "Data Detail Loket Cabang",
-    url: "/detail-data-cabang",
-    icon: Building2Icon,
-  },
-  {
     title: "Data Capaian Anggaran",
     url: "/data-anggaran",
     icon: LineChartIcon,
+  },
+  {
+    title: "Data Detail Loket Cabang",
+    url: "/detail-data-cabang",
+    icon: Building2Icon,
   },
 ];
 

@@ -16,6 +16,7 @@ import {
   ArrowDown,
   Minus,
   Plus,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 // Interface untuk properti komponen
 export interface DateRangeProps {
@@ -63,6 +65,11 @@ interface AnggaranRow {
   growthRupiah: number;
   // Tipe baris untuk membedakan rendering
   rowType: "header" | "subtotal" | "detail" | "grandtotal";
+}
+
+interface LoadingState {
+  message: string;
+  progress: number;
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
@@ -542,7 +549,10 @@ const TabelAnggaran = ({
     []
   );
   const [anggaranData, setAnggaranData] = useState<AnggaranRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<LoadingState | null>({
+    message: "Mempersiapkan data...",
+    progress: 0,
+  });
   const [error, setError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -552,6 +562,21 @@ const TabelAnggaran = ({
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups((prev) => ({ ...prev, [groupName]: !prev[groupName] }));
+
+    // Buat state baru berdasarkan state sebelumnya
+    const newExpandedGroups = {
+      ...expandedGroups,
+      [groupName]: !expandedGroups[groupName],
+    };
+
+    // Simpan state baru ke localStorage
+    localStorage.setItem(
+      "expandedAnggaranGroups",
+      JSON.stringify(newExpandedGroups)
+    );
+
+    // Update state React untuk me-render ulang UI
+    setExpandedGroups(newExpandedGroups);
   };
 
   const formatDateWithoutYear = (date: Date | null) => {
@@ -562,7 +587,7 @@ const TabelAnggaran = ({
   const filterDataByDate = () => {
     if (!startDate || !endDate) return;
     onDateRangeChange(startDate, endDate);
-    generateRekap();
+    fetchData();
   };
 
   const formatRupiah = (amount: number) => {
@@ -575,32 +600,54 @@ const TabelAnggaran = ({
   };
 
   const fetchData = async () => {
-    setLoading(true);
+    setLoading({ message: "Mempersiapkan pengambilan data...", progress: 0 });
     setError(null);
+    setData([]);
+
+    const batchSize = 10;
+    let allResponses: { endpoint: string; data: ReportData[] }[] = [];
     try {
-      const responses = await Promise.all(
-        loketMapping.map((item) =>
-          fetch(item.endpoint)
-            .then((res) =>
-              res.ok
-                ? res.json()
-                : Promise.reject(`Gagal mengambil data dari ${item.endpoint}`)
-            )
-            .then((result) => ({
-              endpoint: item.endpoint,
-              data: result.data || [],
-            }))
-            .catch((err) => {
-              console.error(`Error fetching ${item.endpoint}:`, err);
-              return { endpoint: item.endpoint, data: [], error: err.message };
-            })
-        )
-      );
-      setData(responses);
+      for (let i = 0; i < loketMapping.length; i += batchSize) {
+        const batch = loketMapping.slice(i, i + batchSize);
+        const progress = Math.round((i / loketMapping.length) * 100);
+
+        // update pesan loading untuk setiap batch
+        setLoading({
+          message: `Memuat data loket ${i + 1} dari ${loketMapping.length}...`,
+          progress: progress,
+        });
+
+        const batchResponses = await Promise.all(
+          batch.map((item) =>
+            fetch(item.endpoint)
+              .then((res) => {
+                if (!res.ok)
+                  throw new Error(`Gagal mengambil data dari ${item.endpoint}`);
+                return res.json();
+              })
+              .then((result) => ({
+                endpoint: item.endpoint,
+                data: result.data || [],
+              }))
+              .catch((err) => {
+                console.error(`Error fetching ${item.endpoint}:`, err);
+                return {
+                  endpoint: item.endpoint,
+                  data: [],
+                  error: err.message,
+                };
+              })
+          )
+        );
+        // Gabungkan hasil batch ke data utama dan perbarui UI
+        allResponses = [...allResponses, ...batchResponses];
+        setData(allResponses);
+      }
+      setLoading({ message: "Menyelesaikan...", progress: 100 });
+      setTimeout(() => setLoading(null), 500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi Kesalahan");
-    } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
@@ -798,18 +845,45 @@ const TabelAnggaran = ({
     setExpandedGroups({});
     onDateRangeChange(firstDayOfMonth, today);
     fetchData();
+
+    // Ambil status grup dari localStorage saat komponen dimuat
+    const savedExpandedGroups = localStorage.getItem("expandedAnggaranGroups");
+    if (savedExpandedGroups) {
+      setExpandedGroups(JSON.parse(savedExpandedGroups));
+    } else {
+      // Jika tidak ada data tersimpan, semua tertutup (default)
+      setExpandedGroups({});
+    }
   }, []);
 
   useEffect(() => {
-    if (data.length > 0) generateRekap();
-  }, [data, startDate, endDate]);
+    // Hanya jalankan jika data sudah ada dan kedua tanggal sudah dipilih.
+    if (data.length > 0 && startDate && endDate) {
+      generateRekap();
+      onDateRangeChange(startDate, endDate);
+    }
+  }, [startDate, endDate, data]);
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="p-4 text-center text-sm text-gray-500">
-        Memuat data...
+      <div className="inset-0 z-50 flex flex-col items-center justify-center">
+        <div className="w-full max-w-md p-6 flex flex-col items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* <Loader2 className="h-4 w-4 animate-spin text-primary" /> */}
+
+            <p className="text-sm text-muted-foreground">
+              Memuat Data {`${Math.round(loading.progress)}%`}
+            </p>
+          </div>
+
+          <Progress
+            value={loading.progress}
+            className="w-full transition-all duration-300"
+          />
+        </div>
       </div>
     );
+  }
   if (error)
     return (
       <div className="p-4 text-center text-sm text-red-500">Error: {error}</div>
