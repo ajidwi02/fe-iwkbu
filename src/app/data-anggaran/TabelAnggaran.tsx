@@ -605,9 +605,15 @@ const TabelAnggaran = ({
   };
 
   const generateRekap = () => {
-    if (!data.length || !endDate) return;
+    if (!data.length || !startDate || !endDate) return;
 
-    const numberOfMonths = endDate.getMonth() + 1;
+    // Menghitung jumlah bulan unik dalam rentang tanggal yang dipilih
+    const monthDiff =
+      (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+      (endDate.getMonth() - startDate.getMonth()) +
+      1;
+    const numberOfMonths = monthDiff;
+
     const isDateInRange = (
       dateStr: string | null,
       start: Date | null,
@@ -789,7 +795,7 @@ const TabelAnggaran = ({
     loketMapping.forEach((item) => {
       if (item.parentLoket) initialExpandedState[item.parentLoket] = true;
     });
-    setExpandedGroups(initialExpandedState);
+    setExpandedGroups({});
     onDateRangeChange(firstDayOfMonth, today);
     fetchData();
   }, []);
