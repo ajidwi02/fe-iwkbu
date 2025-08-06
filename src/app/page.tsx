@@ -54,7 +54,7 @@ const Homepage = () => {
       {/* Header */}
       <div className="bg-gray-900 text-white py-4 px-4 md:px-8">
         <h1 className="text-xl md:text-3xl font-bold text-center uppercase leading-tight">
-          Monitoring CICO Pada Strategi M3
+          Monitoring CICO Pada Strategi MAS 3
         </h1>
         <p className="text-sm md:text-base text-center mt-1 font-semibold text-white">
           CLOSING TIME | {currentTime} | JR JATENG

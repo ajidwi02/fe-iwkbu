@@ -45,7 +45,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 // Menu items.
 const items = [
   {
-    title: "Report M3",
+    title: "Report MAS 3",
     url: "/",
     icon: FileBoxIcon,
   },

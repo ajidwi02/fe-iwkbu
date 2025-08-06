@@ -668,8 +668,8 @@ const RekapDashboard = ({
         subTotal.memastikanDetails.map((d) => d.nopol)
       );
       subTotal.memastikanPersen =
-        subTotal.checkoutNopol > 0
-          ? uniqueMemastikanNopol.size / subTotal.checkoutNopol
+        subTotal.checkinNopol > 0
+          ? uniqueMemastikanNopol.size / subTotal.checkinNopol
           : 0;
 
       // Kalkulasi rata-rata Mengupayakan
@@ -886,8 +886,8 @@ const RekapDashboard = ({
         memastikanDetails.map((d) => d.nopol)
       );
       rekap.memastikanPersen =
-        rekap.checkoutNopol > 0
-          ? uniqueMemastikanNopol.size / rekap.checkoutNopol
+        rekap.checkinNopol > 0
+          ? uniqueMemastikanNopol.size / rekap.checkinNopol
           : 0;
       // rekap.memastikanPersen =
       //   rekap.checkoutNopol > 0 ? matchedNopol.size / rekap.checkoutNopol : 0;
@@ -1046,9 +1046,9 @@ const RekapDashboard = ({
         0
       ),
       memastikanPersen:
-        subTotalRows.reduce((sum, row) => sum + row.checkoutNopol, 0) > 0
+        subTotalRows.reduce((sum, row) => sum + row.checkinNopol, 0) > 0
           ? subTotalRows.reduce((sum, row) => sum + row.memastikanNopol, 0) /
-            subTotalRows.reduce((sum, row) => sum + row.checkoutNopol, 0)
+            subTotalRows.reduce((sum, row) => sum + row.checkinNopol, 0)
           : 0,
       menambahkanNopol: subTotalRows.reduce(
         (sum, row) => sum + row.menambahkanNopol,
