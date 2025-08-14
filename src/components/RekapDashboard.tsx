@@ -909,7 +909,7 @@ const RekapDashboard = ({
 
       // Tentukan placeholder untuk nilai kosong berdasarkan data mentah
       const isDataEffectivelyEmpty =
-        rekap.checkinNopol === 0 && rekap.checkoutNopol === 0;
+        rekap.checkinNopol === 0 || rekap.checkoutNopol === 0;
       if (isDataEffectivelyEmpty) {
         const relevantDataForLoket = endpointData.filter((item) => {
           const dateStr =
@@ -920,7 +920,8 @@ const RekapDashboard = ({
 
         if (
           relevantDataForLoket.some(
-            (item) => item.tl_keterangan_konversi_iwkbu === "NIHIL"
+            (item) =>
+              item.tl_keterangan_konversi_iwkbu?.toUpperCase() === "NIHIL"
           )
         ) {
           rekap.placeholderChar = "0";
