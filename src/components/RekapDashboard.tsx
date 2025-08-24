@@ -25,7 +25,8 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Plus, Minus, FileSpreadsheet, CornerDownRight } from "lucide-react";
-import { group } from "console";
+import { Progress } from "./ui/progress";
+import { Loader2 } from "lucide-react";
 
 export interface DateRangeProps {
   startDate: Date | null;
@@ -87,6 +88,11 @@ interface RekapRow {
   memastikanDetails: MemastikanDetail[];
   mengupayakanCount: number;
   placeholderChar: "0" | "-";
+}
+
+interface LoadingState {
+  message: string;
+  progress: number;
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
@@ -501,7 +507,11 @@ const RekapDashboard = ({
   );
   const [rekapData, setRekapData] = useState<RekapRow[]>([]);
   const [month, setMonth] = useState<number>(5);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<LoadingState | null>({
+    message: "Mempersiapkan data...",
+    progress: 0,
+  });
   const [error, setError] = useState<string | null>(null);
   const [selectedRow, setSelectedRow] = useState<RekapRow | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -595,38 +605,49 @@ const RekapDashboard = ({
     saveAs(blob, fileName);
   };
   const fetchData = async () => {
-    setLoading(true);
+    setLoading({ message: "Mempersiapkan pengambilan data...", progress: 0 });
     setError(null);
+    setData([]);
+
+    let fetchedResponses: { endpoint: string; data: ReportData[] }[] = [];
 
     try {
-      const responses = await Promise.all(
-        loketMapping.map((item) =>
-          fetch(item.endpoint)
-            .then((response) => {
-              if (!response.ok)
-                throw new Error(`Gagal mengambil data dari ${item.endpoint}`);
-              return response.json();
-            })
-            .then((result) => ({
-              endpoint: item.endpoint,
-              data: result.data || [],
-            }))
-            .catch((err) => {
-              console.error(`Error fetching ${item.endpoint}:`, err);
-              return {
-                endpoint: item.endpoint,
-                data: [],
-                error: err.message,
-              };
-            })
-        )
-      );
+      // Loop melalui setiap loket satu per satu
+      for (let i = 0; i < loketMapping.length; i++) {
+        const loket = loketMapping[i];
 
-      setData(responses);
+        // Update progress dan pesan untuk setiap fetch
+        const progress = Math.round(((i + 1) / loketMapping.length) * 100);
+        setLoading({
+          message: `Memuat data untuk ${loket.childLoket}...`,
+          progress: progress,
+        });
+
+        // Ambil data untuk satu loket
+        const response = await fetch(loket.endpoint);
+        if (!response.ok) {
+          console.error(`Gagal mengambil data dari ${loket.endpoint}`);
+          // Tetap lanjutkan meskipun satu gagal, dengan data kosong
+          fetchedResponses.push({ endpoint: loket.endpoint, data: [] });
+          continue; // Lanjut ke loket berikutnya
+        }
+
+        const result = await response.json();
+        fetchedResponses.push({
+          endpoint: loket.endpoint,
+          data: result.data || [],
+        });
+
+        // Perbarui state data utama secara real-time
+        setData([...fetchedResponses]);
+      }
+
+      // Selesaikan proses loading
+      setLoading({ message: "Menyelesaikan...", progress: 100 });
+      setTimeout(() => setLoading(null), 500); // Beri jeda untuk animasi 100%
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi Kesalahan");
-    } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
@@ -669,7 +690,7 @@ const RekapDashboard = ({
       );
       subTotal.memastikanPersen =
         subTotal.checkinNopol > 0
-          ? uniqueMemastikanNopol.size / subTotal.checkinNopol
+          ? subTotal.memastikanNopol / subTotal.checkinNopol
           : 0;
 
       // Kalkulasi rata-rata Mengupayakan
@@ -885,10 +906,9 @@ const RekapDashboard = ({
       const uniqueMemastikanNopol = new Set(
         memastikanDetails.map((d) => d.nopol)
       );
+      // Hapus kalkulasi Nopol unik dan gunakan total memastikanNopol secara langsung.
       rekap.memastikanPersen =
-        rekap.checkinNopol > 0
-          ? uniqueMemastikanNopol.size / rekap.checkinNopol
-          : 0;
+        rekap.checkinNopol > 0 ? rekap.memastikanNopol / rekap.checkinNopol : 0;
       // rekap.memastikanPersen =
       //   rekap.checkoutNopol > 0 ? matchedNopol.size / rekap.checkoutNopol : 0;
       rekap.menambahkanNopol = menambahkanNopol;
@@ -1104,8 +1124,19 @@ const RekapDashboard = ({
 
   if (loading) {
     return (
-      <div className="p-4 text-center text-sm text-gray-500">
-        Memuat data...
+      <div className="inset-0 z-50 flex flex-col items-center justify-center">
+        <div className="w-full max-w-md p-6 flex flex-col items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* <Loader2 className="h-4 w-4 animate-spin text-primary" /> */}
+            <p className="text-sm text-muted-foreground">
+              {loading.message} {`${Math.round(loading.progress)}%`}
+            </p>
+          </div>
+          <Progress
+            value={loading.progress}
+            className="w-full transition-all duration-300"
+          />
+        </div>
       </div>
     );
   }
