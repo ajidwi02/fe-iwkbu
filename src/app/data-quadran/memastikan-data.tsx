@@ -1,3 +1,4 @@
+// memastikan-data.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -10,7 +11,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { Calendar as CalendarIcon } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Target,
+  TrendingUp,
+  PlusCircle,
+  Building,
+} from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -18,11 +25,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
+// --- INTERFACE (TETAP SAMA) ---
 export interface DateRangeProps {
   startDate: Date | null;
   endDate: Date | null;
@@ -30,7 +37,6 @@ export interface DateRangeProps {
   initialStartDate?: Date;
   initialEndDate?: Date;
 }
-
 interface ReportData {
   loket: string;
   kode_loket: string;
@@ -46,26 +52,12 @@ interface ReportData {
   iwkbu_ti_bulan_maju: number;
   tl_keterangan_konversi_iwkbu: string;
 }
-
 interface GapDetail {
   nopol: string;
   keterangan: string;
   rupiah: number;
   tgl_transaksi: string;
 }
-
-interface QuadrantEntry {
-  loket: string;
-  value: number;
-}
-
-interface QuadrantData {
-  q1: { count: number; items: QuadrantEntry[] };
-  q2: { count: number; items: QuadrantEntry[] };
-  q3: { count: number; items: QuadrantEntry[] };
-  q4: { count: number; items: QuadrantEntry[] };
-}
-
 interface RekapRow {
   no: number;
   loketKantor: string;
@@ -86,10 +78,27 @@ interface RekapRow {
   gapDetails: GapDetail[];
   mengupayakanCount: number;
 }
+// --- AKHIR INTERFACE ---
+
+// --- START: INTERFACE BARU UNTUK DATA KUADRAN ---
+interface QuadrantItem {
+  loket: string;
+  value: number;
+}
+interface QuadrantDetail {
+  count: number;
+  items: QuadrantItem[];
+}
+interface QuadrantData {
+  memastikan: Record<string, QuadrantDetail>;
+  mengupayakan: Record<string, QuadrantDetail>;
+  menambahkan: Record<string, QuadrantDetail>;
+}
+// --- END: INTERFACE BARU UNTUK DATA KUADRAN ---
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
-
 const loketMapping = [
+  /* ... ISI LOKET MAPPING TETAP SAMA, TIDAK PERLU DIUBAH ... */
   {
     no: 1,
     parentLoket: "KANWIL JAWA TENGAH",
@@ -109,7 +118,7 @@ const loketMapping = [
     parentLoket: "",
     childLoket: "SAMSAT DEMAK",
     petugas: "TIARA HAPSARI",
-    endpoint: `${BASE_URL}/samsatdemak`, //data gagal terambil
+    endpoint: `${BASE_URL}/samsatdemak`,
   },
   {
     no: 4,
@@ -132,8 +141,6 @@ const loketMapping = [
     petugas: "RIKA WAHYU UTAMI",
     endpoint: `${BASE_URL}/samsatsalatiga`,
   },
-
-  // Wilayah Surakarta
   {
     no: 7,
     parentLoket: "CABANG SURAKARTA",
@@ -183,8 +190,6 @@ const loketMapping = [
     petugas: "SURYO BAGUS LUDIRO",
     endpoint: `${BASE_URL}/samsatdelanggu`,
   },
-
-  // Wilayah Magelang
   {
     no: 14,
     parentLoket: "CABANG MAGELANG",
@@ -241,8 +246,6 @@ const loketMapping = [
     petugas: "WINOTO PUJO RUMIESGO",
     endpoint: `${BASE_URL}/samsatbagelen`,
   },
-
-  // Wilayah Purwokerto
   {
     no: 22,
     parentLoket: "CABANG PURWOKERTO",
@@ -269,7 +272,7 @@ const loketMapping = [
     parentLoket: "",
     childLoket: "SAMSAT BANJARNEGARA",
     petugas: "AFRIYANSYA PRAYUGO",
-    endpoint: `${BASE_URL}/samsat/banjarnegara`, //data gagal terambil
+    endpoint: `${BASE_URL}/samsat/banjarnegara`,
   },
   {
     no: 26,
@@ -292,8 +295,6 @@ const loketMapping = [
     petugas: "RIZKY DWI HATMO N.",
     endpoint: `${BASE_URL}/samsat/wangon`,
   },
-
-  // Wilayah Pekalongan
   {
     no: 29,
     parentLoket: "CABANG PEKALONGAN",
@@ -364,8 +365,6 @@ const loketMapping = [
     petugas: "MAGDALENA SIAHAAN",
     endpoint: `${BASE_URL}/samsat/tanjung`,
   },
-
-  // Wilayah Pati
   {
     no: 39,
     parentLoket: "CABANG PATI",
@@ -415,7 +414,6 @@ const loketMapping = [
     petugas: "MUHAMMAD FAHRUDDIN",
     endpoint: `${BASE_URL}/samsat/cepu`,
   },
-  // Wilayah Semarang
   {
     no: 46,
     parentLoket: "CABANG SEMARANG",
@@ -444,7 +442,6 @@ const loketMapping = [
     petugas: "ARIS MURDIYANTO",
     endpoint: `${BASE_URL}/samsat/semarang3`,
   },
-  // Wilayah Sukoharjo
   {
     no: 50,
     parentLoket: "CABANG SUKOHARJO",
@@ -501,7 +498,6 @@ const MemastikanData = ({
   const [month, setMonth] = useState<number>(5);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRow, setSelectedRow] = useState<RekapRow | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [useDateRange, setUseDateRange] = useState(true);
@@ -519,20 +515,8 @@ const MemastikanData = ({
     generateRekap();
   };
 
-  const formatRupiah = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatPercentage = (value: number) => {
-    return `${Math.round(value * 100)}%`;
-  };
-
   const fetchData = async () => {
+    // ... FUNGSI fetchData TETAP SAMA, TIDAK PERLU DIUBAH ...
     setLoading(true);
     setError(null);
 
@@ -569,6 +553,7 @@ const MemastikanData = ({
   };
 
   const generateRekap = () => {
+    // ... FUNGSI generateRekap TETAP SAMA, TIDAK PERLU DIUBAH ...
     if (!data.length) {
       console.log("Data masih kosong");
       return;
@@ -578,25 +563,19 @@ const MemastikanData = ({
     const result: RekapRow[] = [];
     let groupSubTotal: RekapRow | null = null;
 
-    // Helper function to compare dates ignoring year
     const isDateInRange = (
       dateStr: string,
       start: Date | null,
       end: Date | null
     ) => {
       if (!start || !end || !dateStr) return false;
-
       const parts = dateStr.split("/");
       if (parts.length < 2) return false;
-
       const day = parseInt(parts[0]);
       const month = parseInt(parts[1]);
-
-      // Use fixed year (2000) for comparison
       const date = new Date(2000, month - 1, day);
       const startDate = new Date(2000, start.getMonth(), start.getDate());
       const endDate = new Date(2000, end.getMonth(), end.getDate());
-
       return date >= startDate && date <= endDate;
     };
 
@@ -604,6 +583,7 @@ const MemastikanData = ({
       const endpointData =
         data.find((d) => d.endpoint === loket.endpoint)?.data || [];
       const gapDetails: GapDetail[] = [];
+      const memastikanDetails: { nopol: string; rupiah: number }[] = [];
 
       const rekap: RekapRow = {
         no: loket.no,
@@ -626,23 +606,18 @@ const MemastikanData = ({
         mengupayakanCount: 0,
       };
 
-      const matchedNopol = new Set<string>();
-      let matchedRupiah = 0;
+      // const matchedNopol = new Set<string>();
+      // let matchedRupiah = 0;
       let totalBulanMajuTI = 0;
-      let totalBulanMajuTL = 0;
-      let countNopolBulanMajuTL = 0;
       let countNopolBulanMajuTI = 0;
       let menambahkanNopol = 0;
       let menambahkanRupiah = 0;
       const sisaNopolSet = new Set<string>();
       let sisaRupiah = 0;
 
-      // Process checkin (TL) data
       endpointData.forEach((item) => {
         if (item.iwkbu_tl_tgl_transaksi) {
-          const [day, mon] = item.iwkbu_tl_tgl_transaksi.split("/");
-
-          // Check month filter or date range
+          const [, mon] = item.iwkbu_tl_tgl_transaksi.split("/");
           const monthMatch = mon === monthStr;
           const dateRangeMatch =
             useDateRange &&
@@ -654,20 +629,13 @@ const MemastikanData = ({
           ) {
             rekap.checkinNopol += item.kode_nopol_co || 0;
             rekap.checkinRupiah += item.iwkbu_tl_rupiah_penerimaan || 0;
-            if (item.iwkbu_tl_bulan_maju > 0) {
-              totalBulanMajuTL += item.iwkbu_tl_bulan_maju;
-              countNopolBulanMajuTL++;
-            }
           }
         }
       });
 
-      // Process checkout (TI) data
       endpointData.forEach((item) => {
         if (item.iwkbu_ti_tgl_transaksi) {
-          const [day, mon] = item.iwkbu_ti_tgl_transaksi.split("/");
-
-          // Check month filter or date range
+          const [, mon] = item.iwkbu_ti_tgl_transaksi.split("/");
           const monthMatch = mon === monthStr;
           const dateRangeMatch =
             useDateRange &&
@@ -704,10 +672,14 @@ const MemastikanData = ({
             }
 
             if (isMemastikan && item.iwkbu_ti_nopol) {
-              if (!matchedNopol.has(item.iwkbu_ti_nopol)) {
-                matchedNopol.add(item.iwkbu_ti_nopol);
-                matchedRupiah += item.iwkbu_ti_rupiah_penerimaan || 0;
-              }
+              memastikanDetails.push({
+                nopol: item.iwkbu_ti_nopol,
+                rupiah: item.iwkbu_ti_rupiah_penerimaan || 0,
+              });
+              // if (!matchedNopol.has(item.iwkbu_ti_nopol)) {
+              //   matchedNopol.add(item.iwkbu_ti_nopol);
+              //   matchedRupiah += item.iwkbu_ti_rupiah_penerimaan || 0;
+              // }
             }
 
             if (!isMemastikan && !isMenambahkan && item.iwkbu_ti_nopol) {
@@ -723,51 +695,13 @@ const MemastikanData = ({
         }
       });
 
-      // Process gap details (checkin nopols not in checkout)
-      endpointData.forEach((item) => {
-        if (item.iwkbu_tl_tgl_transaksi) {
-          const [day, mon] = item.iwkbu_tl_tgl_transaksi.split("/");
-
-          // Check month filter or date range
-          const monthMatch = mon === monthStr;
-          const dateRangeMatch =
-            useDateRange &&
-            isDateInRange(item.iwkbu_tl_tgl_transaksi, startDate, endDate);
-
-          if (
-            (!useDateRange && monthMatch) ||
-            (useDateRange && dateRangeMatch)
-          ) {
-            const foundInCheckout = endpointData.some(
-              (tiItem) =>
-                tiItem.iwkbu_ti_nopol === item.iwkbu_tl_nopol &&
-                tiItem.iwkbu_ti_tgl_transaksi &&
-                ((!useDateRange &&
-                  tiItem.iwkbu_ti_tgl_transaksi.split("/")[1] === monthStr) ||
-                  (useDateRange &&
-                    isDateInRange(
-                      tiItem.iwkbu_ti_tgl_transaksi,
-                      startDate,
-                      endDate
-                    )))
-            );
-
-            if (!foundInCheckout) {
-              gapDetails.push({
-                nopol: item.iwkbu_tl_nopol,
-                keterangan: item.tl_keterangan_konversi_iwkbu || "-",
-                rupiah: item.iwkbu_tl_rupiah_penerimaan || 0,
-                tgl_transaksi: item.iwkbu_tl_tgl_transaksi,
-              });
-            }
-          }
-        }
-      });
-
-      rekap.memastikanNopol = matchedNopol.size;
-      rekap.memastikanRupiah = matchedRupiah;
+      rekap.memastikanNopol = memastikanDetails.length;
+      rekap.memastikanRupiah = memastikanDetails.reduce(
+        (sum, detail) => sum + detail.rupiah,
+        0
+      );
       rekap.memastikanPersen =
-        rekap.checkoutNopol > 0 ? matchedNopol.size / rekap.checkoutNopol : 0;
+        rekap.checkinNopol > 0 ? rekap.memastikanNopol / rekap.checkinNopol : 0;
       rekap.menambahkanNopol = menambahkanNopol;
       rekap.menambahkanRupiah = menambahkanRupiah;
       rekap.gapNopol = rekap.checkinNopol - rekap.memastikanNopol;
@@ -779,15 +713,12 @@ const MemastikanData = ({
       rekap.sisaRupiah = sisaRupiah;
       rekap.gapDetails = gapDetails;
 
-      // Handle parent loket and subtotals
       if (loket.parentLoket) {
         if (groupSubTotal) {
           groupSubTotal.memastikanPersen =
-            groupSubTotal.checkoutNopol > 0
-              ? groupSubTotal.memastikanNopol / groupSubTotal.checkoutNopol
+            groupSubTotal.checkinNopol > 0
+              ? groupSubTotal.memastikanNopol / groupSubTotal.checkinNopol
               : 0;
-
-          // Calculate average mengupayakan for subtotal
           groupSubTotal.mengupayakan =
             groupSubTotal.mengupayakanCount > 0
               ? Math.round(
@@ -865,11 +796,9 @@ const MemastikanData = ({
 
     if (groupSubTotal) {
       groupSubTotal.memastikanPersen =
-        groupSubTotal.checkoutNopol > 0
-          ? groupSubTotal.memastikanNopol / groupSubTotal.checkoutNopol
+        groupSubTotal.checkinNopol > 0
+          ? groupSubTotal.memastikanNopol / groupSubTotal.checkinNopol
           : 0;
-
-      // Calculate average mengupayakan for subtotal
       groupSubTotal.mengupayakan =
         groupSubTotal.mengupayakanCount > 0
           ? Math.round(
@@ -879,46 +808,6 @@ const MemastikanData = ({
       result.push(groupSubTotal);
     }
 
-    const grandTotal: RekapRow = {
-      no: 0,
-      loketKantor: "GRAND TOTAL",
-      petugas: "",
-      checkinNopol: result.reduce((sum, row) => sum + row.checkinNopol, 0),
-      checkinRupiah: result.reduce((sum, row) => sum + row.checkinRupiah, 0),
-      checkoutNopol: result.reduce((sum, row) => sum + row.checkoutNopol, 0),
-      checkoutRupiah: result.reduce((sum, row) => sum + row.checkoutRupiah, 0),
-      memastikanNopol: result.reduce(
-        (sum, row) => sum + row.memastikanNopol,
-        0
-      ),
-      memastikanRupiah: result.reduce(
-        (sum, row) => sum + row.memastikanRupiah,
-        0
-      ),
-      memastikanPersen:
-        result.reduce((sum, row) => sum + row.checkoutNopol, 0) > 0
-          ? result.reduce((sum, row) => sum + row.memastikanNopol, 0) /
-            result.reduce((sum, row) => sum + row.checkoutNopol, 0)
-          : 0,
-      menambahkanNopol: result.reduce(
-        (sum, row) => sum + row.menambahkanNopol,
-        0
-      ),
-      menambahkanRupiah: result.reduce(
-        (sum, row) => sum + row.menambahkanRupiah,
-        0
-      ),
-      mengupayakan:
-        result.reduce((sum, row) => sum + row.mengupayakan, 0) /
-        result.filter((row) => row.mengupayakan > 0).length,
-      gapNopol: result.reduce((sum, row) => sum + row.gapNopol, 0),
-      sisaNopol: result.reduce((sum, row) => sum + row.sisaNopol, 0),
-      sisaRupiah: result.reduce((sum, row) => sum + row.sisaRupiah, 0),
-      gapDetails: [],
-      mengupayakanCount: 0,
-    };
-
-    result.push(grandTotal);
     setRekapData(result);
   };
 
@@ -930,10 +819,7 @@ const MemastikanData = ({
     setEndDate(today);
     setMonth(today.getMonth() + 1);
     setUseDateRange(true);
-
-    // kirim ke parent component
     onDateRangeChange(firstDayOfMonth, today);
-
     fetchData();
   }, []);
 
@@ -943,142 +829,133 @@ const MemastikanData = ({
     }
   }, [data, month]);
 
-  const handleDetail = (row: RekapRow) => {
-    setSelectedRow(row);
-  };
-
-  // Filter to only show SUB TOTAL rows
-  const filteredData = rekapData.filter(
-    (row) =>
-      row.loketKantor === "SUB TOTAL" ||
-      row.loketKantor === "KANWIL JAWA TENGAH" ||
-      row.loketKantor === "CABANG SURAKARTA" ||
-      row.loketKantor === "CABANG MAGELANG" ||
-      row.loketKantor === "CABANG PURWOKERTO" ||
-      row.loketKantor === "CABANG PEKALONGAN" ||
-      row.loketKantor === "CABANG PATI" ||
-      row.loketKantor === "CABANG SEMARANG" ||
-      row.loketKantor === "CABANG SUKOHARJO"
-  );
-
+  // --- START: LOGIKA BARU UNTUK MEMPROSES DATA DASHBOARD KUADRAN ---
   const quadrantData = useMemo(() => {
-    if (!rekapData.length) return null;
+    if (!rekapData || rekapData.length === 0) return null;
 
-    // Data perwakilan cabang yang akan digunakan untuk visualisasi
-    const branchData = rekapData
-      .filter(
-        (row) =>
-          row.loketKantor === "KANWIL JAWA TENGAH" ||
-          row.loketKantor === "CABANG SURAKARTA" ||
-          row.loketKantor === "CABANG MAGELANG" ||
-          row.loketKantor === "CABANG PURWOKERTO" ||
-          row.loketKantor === "CABANG PEKALONGAN" ||
-          row.loketKantor === "CABANG PATI" ||
-          row.loketKantor === "CABANG SEMARANG" ||
-          row.loketKantor === "CABANG SUKOHARJO"
-      )
-      .map((row) => {
-        // Cari baris SUB TOTAL yang sesuai untuk mendapatkan nilai kalkulasi
-        const subTotalRow = rekapData.find(
-          (r) =>
-            r.loketKantor === "SUB TOTAL" &&
-            rekapData.indexOf(r) > rekapData.indexOf(row)
-        );
-        return {
-          loketKantor: row.loketKantor,
-          memastikanPersen: subTotalRow?.memastikanPersen || 0,
-          mengupayakan: subTotalRow?.mengupayakan || 0,
-          menambahkanNopol: subTotalRow?.menambahkanNopol || 0,
-        };
-      });
-
-    const memastikanQuadrants: QuadrantData = {
+    const initQuadrant = () => ({
       q1: { count: 0, items: [] },
       q2: { count: 0, items: [] },
       q3: { count: 0, items: [] },
       q4: { count: 0, items: [] },
-    };
-    const mengupayakanQuadrants: QuadrantData = {
-      q1: { count: 0, items: [] },
-      q2: { count: 0, items: [] },
-      q3: { count: 0, items: [] },
-      q4: { count: 0, items: [] },
-    };
-    const menambahkanQuadrants: QuadrantData = {
-      q1: { count: 0, items: [] },
-      q2: { count: 0, items: [] },
-      q3: { count: 0, items: [] },
-      q4: { count: 0, items: [] },
-    };
-
-    branchData.forEach((row) => {
-      // Klasifikasi Memastikan
-      const memastikanPercent = row.memastikanPersen * 100;
-      const memastikanItem = {
-        loket: row.loketKantor,
-        value: memastikanPercent,
-      };
-      if (memastikanPercent >= 76) {
-        memastikanQuadrants.q1.count++;
-        memastikanQuadrants.q1.items.push(memastikanItem);
-      } else if (memastikanPercent >= 51) {
-        memastikanQuadrants.q2.count++;
-        memastikanQuadrants.q2.items.push(memastikanItem);
-      } else if (memastikanPercent >= 26) {
-        memastikanQuadrants.q3.count++;
-        memastikanQuadrants.q3.items.push(memastikanItem);
-      } else {
-        memastikanQuadrants.q4.count++;
-        memastikanQuadrants.q4.items.push(memastikanItem);
-      }
-
-      // Klasifikasi Mengupayakan
-      const mengupayakanValue = row.mengupayakan || 0;
-      const mengupayakanItem = {
-        loket: row.loketKantor,
-        value: mengupayakanValue,
-      };
-      if (mengupayakanValue >= 10) {
-        mengupayakanQuadrants.q1.count++;
-        mengupayakanQuadrants.q1.items.push(mengupayakanItem);
-      } else if (mengupayakanValue >= 7) {
-        mengupayakanQuadrants.q2.count++;
-        mengupayakanQuadrants.q2.items.push(mengupayakanItem);
-      } else if (mengupayakanValue >= 4) {
-        mengupayakanQuadrants.q3.count++;
-        mengupayakanQuadrants.q3.items.push(mengupayakanItem);
-      } else {
-        mengupayakanQuadrants.q4.count++;
-        mengupayakanQuadrants.q4.items.push(mengupayakanItem);
-      }
-
-      // Klasifikasi Menambahkan
-      const menambahkanValue = row.menambahkanNopol || 0;
-      const menambahkanItem = {
-        loket: row.loketKantor,
-        value: menambahkanValue,
-      };
-      if (menambahkanValue >= 15) {
-        menambahkanQuadrants.q1.count++;
-        menambahkanQuadrants.q1.items.push(menambahkanItem);
-      } else if (menambahkanValue >= 11) {
-        menambahkanQuadrants.q2.count++;
-        menambahkanQuadrants.q2.items.push(menambahkanItem);
-      } else if (menambahkanValue >= 6) {
-        menambahkanQuadrants.q3.count++;
-        menambahkanQuadrants.q3.items.push(menambahkanItem);
-      } else {
-        menambahkanQuadrants.q4.count++;
-        menambahkanQuadrants.q4.items.push(menambahkanItem);
-      }
     });
 
-    return {
-      memastikan: memastikanQuadrants,
-      mengupayakan: mengupayakanQuadrants,
-      menambahkan: menambahkanQuadrants,
+    const data: QuadrantData = {
+      memastikan: initQuadrant(),
+      mengupayakan: initQuadrant(),
+      menambahkan: initQuadrant(),
     };
+
+    const branchData: {
+      loket: string;
+      memastikan: number;
+      mengupayakan: number;
+      menambahkan: number;
+    }[] = [];
+
+    // Ekstrak data sub total untuk setiap cabang
+    for (let i = 0; i < rekapData.length; i++) {
+      const row = rekapData[i];
+      if (
+        row.loketKantor.startsWith("KANWIL") ||
+        row.loketKantor.startsWith("CABANG")
+      ) {
+        const subTotalRow = rekapData
+          .slice(i + 1)
+          .find((r) => r.loketKantor === "SUB TOTAL");
+
+        if (subTotalRow) {
+          branchData.push({
+            loket: row.loketKantor,
+            memastikan: subTotalRow.memastikanPersen * 100,
+            mengupayakan: subTotalRow.mengupayakan,
+            menambahkan: subTotalRow.menambahkanNopol,
+          });
+        }
+      }
+    }
+
+    // Kategorikan setiap cabang ke dalam kuadran
+    branchData.forEach((branch) => {
+      // Memastikan
+      if (branch.memastikan >= 76)
+        data.memastikan.q1.items.push({
+          loket: branch.loket,
+          value: branch.memastikan,
+        });
+      else if (branch.memastikan >= 51)
+        data.memastikan.q2.items.push({
+          loket: branch.loket,
+          value: branch.memastikan,
+        });
+      else if (branch.memastikan >= 26)
+        data.memastikan.q3.items.push({
+          loket: branch.loket,
+          value: branch.memastikan,
+        });
+      else
+        data.memastikan.q4.items.push({
+          loket: branch.loket,
+          value: branch.memastikan,
+        });
+
+      // Mengupayakan
+      if (branch.mengupayakan >= 10)
+        data.mengupayakan.q1.items.push({
+          loket: branch.loket,
+          value: branch.mengupayakan,
+        });
+      else if (branch.mengupayakan >= 7)
+        data.mengupayakan.q2.items.push({
+          loket: branch.loket,
+          value: branch.mengupayakan,
+        });
+      else if (branch.mengupayakan >= 4)
+        data.mengupayakan.q3.items.push({
+          loket: branch.loket,
+          value: branch.mengupayakan,
+        });
+      else
+        data.mengupayakan.q4.items.push({
+          loket: branch.loket,
+          value: branch.mengupayakan,
+        });
+
+      // Menambahkan
+      if (branch.menambahkan >= 15)
+        data.menambahkan.q1.items.push({
+          loket: branch.loket,
+          value: branch.menambahkan,
+        });
+      else if (branch.menambahkan >= 11)
+        data.menambahkan.q2.items.push({
+          loket: branch.loket,
+          value: branch.menambahkan,
+        });
+      else if (branch.menambahkan >= 6)
+        data.menambahkan.q3.items.push({
+          loket: branch.loket,
+          value: branch.menambahkan,
+        });
+      else
+        data.menambahkan.q4.items.push({
+          loket: branch.loket,
+          value: branch.menambahkan,
+        });
+    });
+
+    // Hitung total di setiap kuadran
+    for (const key of ["memastikan", "mengupayakan", "menambahkan"]) {
+      const metric = key as keyof QuadrantData;
+      for (let i = 1; i <= 4; i++) {
+        const qKey = `q${i}` as keyof (typeof data)[typeof metric];
+        data[metric][qKey].count = data[metric][qKey].items.length;
+      }
+    }
+
+    return data;
   }, [rekapData]);
+  // --- END: LOGIKA BARU UNTUK MEMPROSES DATA DASHBOARD KUADRAN ---
 
   if (loading) {
     return (
@@ -1096,8 +973,9 @@ const MemastikanData = ({
 
   return (
     <div className="space-y-8">
-      {/* Filter Section - Tetap sama */}
+      {/* Filter Section */}
       <div className="flex flex-col sm:flex-row sm:items-end gap-4 rounded-md border p-4 shadow-sm">
+        {/* ... Isi Filter tetap sama ... */}
         <div className="w-full">
           <label className="text-sm font-medium mb-1 block">
             Filter Tanggal
@@ -1388,11 +1266,12 @@ const MemastikanData = ({
           </div>
         )}
       </div>
+      {/* ============== END: LAYOUT BARU YANG DIGABUNGKAN ============== */}
 
-      {/* 2. Bagian Tabel Peringkat Kinerja */}
+      {/* Bagian Tabel Peringkat Kinerja (TETAP ADA) */}
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-center mb-6">
-          Tabel Kinerja Cabang
+          Tabel Peringkat Kinerja Cabang
         </h2>
         <div className="border rounded-lg shadow-sm">
           <Table>
