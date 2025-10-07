@@ -508,10 +508,13 @@ const RekapDashboard = ({
   const [rekapData, setRekapData] = useState<RekapRow[]>([]);
   const [month, setMonth] = useState<number>(5);
   // const [loading, setLoading] = useState(true);
-  const [loading, setLoading] = useState<LoadingState | null>({
-    message: "Mempersiapkan data...",
-    progress: 0,
-  });
+  // const [loading, setLoading] = useState<LoadingState | null>({
+  //   message: "Mempersiapkan data...",
+  //   progress: 0,
+  // });
+  const [loading, setLoading] = useState<string | null>(
+    "Mempersiapkan data..."
+  );
   const [error, setError] = useState<string | null>(null);
   const [selectedRow, setSelectedRow] = useState<RekapRow | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -605,50 +608,75 @@ const RekapDashboard = ({
     saveAs(blob, fileName);
   };
   const fetchData = async () => {
-    setLoading({ message: "Mempersiapkan pengambilan data...", progress: 0 });
+    setLoading("Mengambil data dari semua loket...");
     setError(null);
     setData([]);
 
     let fetchedResponses: { endpoint: string; data: ReportData[] }[] = [];
-
     try {
-      // Loop melalui setiap loket satu per satu
-      for (let i = 0; i < loketMapping.length; i++) {
-        const loket = loketMapping[i];
-
-        // Update progress dan pesan untuk setiap fetch
-        const progress = Math.round(((i + 1) / loketMapping.length) * 100);
-        setLoading({
-          message: `Memuat data untuk ${loket.childLoket}...`,
-          progress: progress,
-        });
-
-        // Ambil data untuk satu loket
-        const response = await fetch(loket.endpoint);
-        if (!response.ok) {
-          console.error(`Gagal mengambil data dari ${loket.endpoint}`);
-          // Tetap lanjutkan meskipun satu gagal, dengan data kosong
-          fetchedResponses.push({ endpoint: loket.endpoint, data: [] });
-          continue; // Lanjut ke loket berikutnya
+      setLoading("Mengambil data dari semua loket...");
+      const fetchPromises = loketMapping.map(async (loket) => {
+        try {
+          const response = await fetch(loket.endpoint);
+          if (!response.ok) {
+            console.log(`Gagal mengambil data dari ${loket.endpoint}`);
+            return { endpoint: loket.endpoint, data: [] };
+          }
+          const result = await response.json();
+          return { endpoint: loket.endpoint, data: result.data || [] };
+        } catch (error) {
+          console.log(`Error pada ${loket.endpoint}:`, error);
+          return { endpoint: loket.endpoint, data: [] };
         }
+      });
+      const responses = await Promise.all(fetchPromises);
 
-        const result = await response.json();
-        fetchedResponses.push({
-          endpoint: loket.endpoint,
-          data: result.data || [],
-        });
+      setLoading("Memproses dan menampilkan data...");
+      setData(responses);
 
-        // Perbarui state data utama secara real-time
-        setData([...fetchedResponses]);
-      }
-
-      // Selesaikan proses loading
-      setLoading({ message: "Menyelesaikan...", progress: 100 });
-      setTimeout(() => setLoading(null), 500); // Beri jeda untuk animasi 100%
+      setTimeout(() => setLoading(null), 500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi Kesalahan");
       setLoading(null);
     }
+    // try {
+    //   // Loop melalui setiap loket satu per satu
+    //   for (let i = 0; i < loketMapping.length; i++) {
+    //     const loket = loketMapping[i];
+
+    //     // Update progress dan pesan untuk setiap fetch
+    //     const progress = Math.round(((i + 1) / loketMapping.length) * 100);
+    //     setLoading({
+    //       message: `Memuat data untuk ${loket.childLoket}...`,
+    //       progress: progress,
+    //     });
+
+    //     // Ambil data untuk satu loket
+    //     const response = await fetch(loket.endpoint);
+    //     if (!response.ok) {
+    //       console.error(`Gagal mengambil data dari ${loket.endpoint}`);
+    //       // Tetap lanjutkan meskipun satu gagal, dengan data kosong
+    //       fetchedResponses.push({ endpoint: loket.endpoint, data: [] });
+    //       continue; // Lanjut ke loket berikutnya
+    //     }
+
+    //     const result = await response.json();
+    //     fetchedResponses.push({
+    //       endpoint: loket.endpoint,
+    //       data: result.data || [],
+    //     });
+
+    //     // Perbarui state data utama secara real-time
+    //     setData([...fetchedResponses]);
+    //   }
+
+    //   // Selesaikan proses loading
+    //   setLoading({ message: "Menyelesaikan...", progress: 100 });
+    //   setTimeout(() => setLoading(null), 500); // Beri jeda untuk animasi 100%
+    // } catch (err) {
+    //   setError(err instanceof Error ? err.message : "Terjadi Kesalahan");
+    //   setLoading(null);
+    // }
   };
 
   const generateRekap = () => {
@@ -767,6 +795,26 @@ const RekapDashboard = ({
         }
       });
 
+      const checkinNopolSet = new Set<string>();
+      endpointData.forEach((item) => {
+        if (item.iwkbu_tl_tgl_transaksi) {
+          const [day, mon] = item.iwkbu_tl_tgl_transaksi.split("/");
+          const monthMatch = mon === monthStr;
+          const dateRangeMatch =
+            useDateRange &&
+            isDateInRange(item.iwkbu_tl_tgl_transaksi, startDate, endDate);
+
+          if (
+            (!useDateRange && monthMatch) ||
+            (useDateRange && dateRangeMatch)
+          ) {
+            if (item.iwkbu_tl_nopol) {
+              checkinNopolSet.add(item.iwkbu_tl_nopol);
+            }
+          }
+        }
+      });
+
       // Process checkout (TI) data
       endpointData.forEach((item) => {
         if (item.iwkbu_ti_tgl_transaksi) {
@@ -789,19 +837,20 @@ const RekapDashboard = ({
               item.tl_keterangan_konversi_iwkbu === "Armada Baru" ||
               item.tl_keterangan_konversi_iwkbu === "Mutasi Masuk";
 
-            const isMemastikan = endpointData.some(
-              (ciItem) =>
-                ciItem.iwkbu_tl_nopol === item.iwkbu_ti_nopol &&
-                ciItem.iwkbu_tl_tgl_transaksi &&
-                ((!useDateRange &&
-                  ciItem.iwkbu_tl_tgl_transaksi.split("/")[1] === monthStr) ||
-                  (useDateRange &&
-                    isDateInRange(
-                      ciItem.iwkbu_tl_tgl_transaksi,
-                      startDate,
-                      endDate
-                    )))
-            );
+            const isMemastikan = checkinNopolSet.has(item.iwkbu_ti_nopol);
+            // const isMemastikan = endpointData.some(
+            //   (ciItem) =>
+            //     ciItem.iwkbu_tl_nopol === item.iwkbu_ti_nopol &&
+            //     ciItem.iwkbu_tl_tgl_transaksi &&
+            //     ((!useDateRange &&
+            //       ciItem.iwkbu_tl_tgl_transaksi.split("/")[1] === monthStr) ||
+            //       (useDateRange &&
+            //         isDateInRange(
+            //           ciItem.iwkbu_tl_tgl_transaksi,
+            //           startDate,
+            //           endDate
+            //         )))
+            // );
 
             if (isMenambahkan) {
               menambahkanNopol += 1;
@@ -1124,18 +1173,10 @@ const RekapDashboard = ({
 
   if (loading) {
     return (
-      <div className="inset-0 z-50 flex flex-col items-center justify-center">
-        <div className="w-full max-w-md p-6 flex flex-col items-center gap-4">
-          <div className="flex items-center gap-3">
-            {/* <Loader2 className="h-4 w-4 animate-spin text-primary" /> */}
-            <p className="text-sm text-muted-foreground">
-              {loading.message} {`${Math.round(loading.progress)}%`}
-            </p>
-          </div>
-          <Progress
-            value={loading.progress}
-            className="w-full transition-all duration-300"
-          />
+      <div className="inset-0 z-50 flex flex-col items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-3 p-6">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <p className="text-md text-muted-foreground">{loading}</p>
         </div>
       </div>
     );
